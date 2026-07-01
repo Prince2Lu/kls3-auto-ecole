@@ -1,3 +1,4 @@
+import { RelancesAujourdhui } from "@/components/dashboard/RelancesAujourdhui";
 import { StatusCounters } from "@/components/dashboard/StatusCounters";
 import { createClient } from "@/lib/supabase/server";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
@@ -34,6 +35,16 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
     }
   }
 
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const { count: relancesToday } = await supabase
+    .from("reminders")
+    .select("*", { count: "exact", head: true })
+    .eq("tenant_id", tenant.id)
+    .eq("type", "auto")
+    .gte("sent_at", todayStart.toISOString());
+
   return (
     <div className="space-y-6">
       <div>
@@ -41,6 +52,9 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
         <p className="mt-1 text-sm text-zinc-500">
           Suivi des dossiers élèves — {tenant.name}
         </p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <RelancesAujourdhui count={relancesToday ?? 0} />
       </div>
       <StatusCounters counts={counts} />
     </div>

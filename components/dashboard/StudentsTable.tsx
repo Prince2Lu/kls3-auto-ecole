@@ -18,13 +18,17 @@ type StudentsTableProps = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
+  en_attente: "En attente",
   document_pending: "Documents en attente",
+  documents_complets: "À valider",
   payment_pending: "Paiement en attente",
   complete: "Complet",
 };
 
 const STATUS_BADGE: Record<string, string> = {
+  en_attente: "bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200",
   document_pending: "bg-amber-100 text-amber-800 ring-1 ring-amber-200",
+  documents_complets: "bg-violet-100 text-violet-800 ring-1 ring-violet-200",
   payment_pending: "bg-blue-100 text-blue-800 ring-1 ring-blue-200",
   complete: "bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200",
 };
@@ -32,6 +36,7 @@ const STATUS_BADGE: Record<string, string> = {
 const FILTER_OPTIONS = [
   { value: "all", label: "Tous" },
   { value: "document_pending", label: "Documents" },
+  { value: "documents_complets", label: "À valider" },
   { value: "payment_pending", label: "Paiement" },
   { value: "complete", label: "Complets" },
 ] as const;

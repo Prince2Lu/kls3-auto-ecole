@@ -17,25 +17,40 @@ export type Database = {
       documents: {
         Row: {
           drive_file_id: string | null
+          file_path: string | null
           id: string
+          mime_type: string | null
+          original_filename: string | null
+          size_bytes: number | null
           status: string | null
           student_id: string
+          tenant_id: string
           type: string
           uploaded_at: string | null
         }
         Insert: {
           drive_file_id?: string | null
+          file_path?: string | null
           id?: string
+          mime_type?: string | null
+          original_filename?: string | null
+          size_bytes?: number | null
           status?: string | null
           student_id: string
+          tenant_id?: string
           type: string
           uploaded_at?: string | null
         }
         Update: {
           drive_file_id?: string | null
+          file_path?: string | null
           id?: string
+          mime_type?: string | null
+          original_filename?: string | null
+          size_bytes?: number | null
           status?: string | null
           student_id?: string
+          tenant_id?: string
           type?: string
           uploaded_at?: string | null
         }
@@ -45,6 +60,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -177,18 +199,24 @@ export type Database = {
           reminder_number: number | null
           sent_at: string | null
           student_id: string
+          tenant_id: string | null
+          type: string
         }
         Insert: {
           id?: string
           reminder_number?: number | null
           sent_at?: string | null
           student_id: string
+          tenant_id?: string | null
+          type?: string
         }
         Update: {
           id?: string
           reminder_number?: number | null
           sent_at?: string | null
           student_id?: string
+          tenant_id?: string | null
+          type?: string
         }
         Relationships: [
           {
@@ -196,6 +224,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reminders_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -214,6 +249,8 @@ export type Database = {
           prenom: string
           status: string | null
           tenant_id: string
+          validated_at: string | null
+          validated_by: string | null
         }
         Insert: {
           created_at?: string | null
@@ -228,6 +265,8 @@ export type Database = {
           prenom: string
           status?: string | null
           tenant_id: string
+          validated_at?: string | null
+          validated_by?: string | null
         }
         Update: {
           created_at?: string | null
@@ -242,6 +281,8 @@ export type Database = {
           prenom?: string
           status?: string | null
           tenant_id?: string
+          validated_at?: string | null
+          validated_by?: string | null
         }
         Relationships: [
           {
@@ -373,6 +414,10 @@ export type Database = {
       }
     }
     Functions: {
+      get_auth_user_display_name: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
       get_my_tenant_ids: { Args: never; Returns: string[] }
       get_tenant_notification_email: {
         Args: { p_tenant_id: string }

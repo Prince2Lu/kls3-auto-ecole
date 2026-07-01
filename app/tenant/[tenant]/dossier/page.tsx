@@ -1,17 +1,15 @@
+import { DocumentUploadCard } from "@/components/dossier/DocumentUploadCard";
+import { DocumentsChecklist } from "@/components/dossier/DocumentsChecklist";
+import { REQUIRED_DOCUMENT_TYPES } from "@/lib/constants/documents";
+import { validateMagicLinkForDossier } from "@/lib/dossier/magic-link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
+import { toStudentDocument } from "@/lib/types/documents";
 import { notFound } from "next/navigation";
 
 type DossierPageProps = {
   params: Promise<{ tenant: string }>;
   searchParams: Promise<{ token?: string }>;
-};
-
-type MagicLinkRow = {
-  id: string;
-  expires_at: string;
-  used_at: string | null;
-  students: { nom: string; prenom: string } | null;
 };
 
 function ErrorMessage({ title, message }: { title: string; message: string }) {
@@ -58,14 +56,13 @@ export default async function DossierPage({
     );
   }
 
-  const { data: link, error } = await admin
-    .from("magic_links")
-    .select("id, expires_at, used_at, students(nom, prenom)")
-    .eq("token", token.trim())
-    .eq("tenant_id", tenant.id)
-    .maybeSingle();
+  const magicLink = await validateMagicLinkForDossier(
+    admin,
+    token.trim(),
+    tenant.id
+  );
 
-  if (error || !link) {
+  if (!magicLink) {
     return (
       <ErrorMessage
         title="Lien invalide"
@@ -74,53 +71,50 @@ export default async function DossierPage({
     );
   }
 
-  const row = link as MagicLinkRow;
-
-  if (new Date(row.expires_at) < new Date()) {
-    return (
-      <ErrorMessage
-        title="Lien expiré"
-        message="Ce lien a expiré. Contactez votre auto-école pour recevoir un nouveau lien."
-      />
-    );
-  }
-
-  if (row.used_at) {
-    return (
-      <ErrorMessage
-        title="Lien déjà utilisé"
-        message="Ce lien a déjà été utilisé. Contactez votre auto-école pour recevoir un nouveau lien."
-      />
-    );
-  }
-
-  const { data: updated, error: updateError } = await admin
-    .from("magic_links")
-    .update({ used_at: new Date().toISOString() })
-    .eq("id", row.id)
-    .is("used_at", null)
-    .select("id")
+  const { data: student } = await admin
+    .from("students")
+    .select("nom, prenom")
+    .eq("id", magicLink.student_id)
     .maybeSingle();
 
-  if (updateError || !updated) {
-    return (
-      <ErrorMessage
-        title="Lien déjà utilisé"
-        message="Ce lien a déjà été utilisé. Contactez votre auto-école pour recevoir un nouveau lien."
-      />
-    );
-  }
+  const { data: documentRows } = await admin
+    .from("documents")
+    .select(
+      "id, tenant_id, student_id, type, status, file_path, original_filename, mime_type, size_bytes, uploaded_at"
+    )
+    .eq("student_id", magicLink.student_id);
 
-  const student = row.students;
+  const documents = (documentRows ?? [])
+    .map((row) => toStudentDocument(row))
+    .filter((doc): doc is NonNullable<typeof doc> => doc !== null);
+
+  const documentsByType = new Map(documents.map((doc) => [doc.type, doc]));
 
   return (
-    <div className="mx-auto max-w-lg px-6 py-8">
-      <h1 className="text-xl font-semibold text-zinc-900">
-        Bonjour {student?.prenom ?? ""} {student?.nom ?? ""}
-      </h1>
-      <p className="mt-6 rounded-lg border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-500">
-        Votre dossier — pièces à fournir (à venir)
-      </p>
+    <div className="mx-auto max-w-lg space-y-6 px-6 py-8">
+      <div>
+        <h1 className="text-xl font-semibold text-zinc-900">
+          Bonjour {student?.prenom ?? ""} {student?.nom ?? ""}
+        </h1>
+        <p className="mt-2 text-sm text-zinc-600">
+          Déposez vos pièces justificatives ci-dessous pour compléter votre
+          dossier.
+        </p>
+      </div>
+
+      <DocumentsChecklist documents={documents} />
+
+      <div className="space-y-4">
+        {REQUIRED_DOCUMENT_TYPES.map((config) => (
+          <DocumentUploadCard
+            key={config.type}
+            config={config}
+            token={token.trim()}
+            tenantSlug={slug}
+            document={documentsByType.get(config.type)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

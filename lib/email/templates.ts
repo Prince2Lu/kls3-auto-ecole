@@ -53,3 +53,27 @@ function escapeHtml(value: string) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
+
+export function reminderEmail(
+  prenom: string,
+  lien: string,
+  tenantName: string
+): { subject: string; html: string } {
+  return {
+    subject: `Rappel — complétez votre dossier — ${tenantName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#18181b">
+        <p>Bonjour ${escapeHtml(prenom)},</p>
+        <p>Il manque encore des pièces justificatives dans votre dossier chez <strong>${escapeHtml(tenantName)}</strong>.</p>
+        <p>Cliquez sur le bouton ci-dessous pour reprendre votre dossier et déposer les documents manquants :</p>
+        <p style="margin:32px 0">
+          <a href="${lien}" style="background:#4B7BF5;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;display:inline-block">
+            Compléter mon dossier
+          </a>
+        </p>
+        <p style="font-size:13px;color:#71717a">Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br/>
+        <a href="${lien}">${lien}</a></p>
+      </div>
+    `,
+  };
+}

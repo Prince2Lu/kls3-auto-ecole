@@ -15,7 +15,12 @@ export type Document = Tables<"documents">;
 export type OcrExtraction = Tables<"ocr_extractions">;
 export type Reminder = Tables<"reminders">;
 
-export type StudentStatus = "document_pending" | "payment_pending" | "complete";
+export type StudentStatus =
+  | "en_attente"
+  | "document_pending"
+  | "documents_complets"
+  | "payment_pending"
+  | "complete";
 export type DocumentType = "cni" | "photo" | "asr" | "rib";
 export type DocumentStatus = "pending" | "uploaded" | "transferred_to_drive";
 export type TenantMemberRole = "owner" | "member";
