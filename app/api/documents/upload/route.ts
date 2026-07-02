@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { extractFromDocument } from "@/lib/ocr/extract";
+import { createClient } from "@/lib/supabase/server";
+import { touchLastActivity } from "@/lib/students/touch-last-activity";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -31,6 +32,8 @@ export async function POST(request: Request) {
   if (docError) {
     return NextResponse.json({ error: docError.message }, { status: 500 });
   }
+
+  await touchLastActivity(supabase, studentId);
 
   const ocrResult = await extractFromDocument(file, documentType);
 

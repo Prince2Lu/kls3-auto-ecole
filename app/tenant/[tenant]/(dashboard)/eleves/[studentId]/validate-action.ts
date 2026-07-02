@@ -30,12 +30,15 @@ export async function validateDossier(
     return { error: "Accès refusé" };
   }
 
+  const nowIso = new Date().toISOString();
+
   const { data, error } = await supabase
     .from("students")
     .update({
       status: "complete",
-      validated_at: new Date().toISOString(),
+      validated_at: nowIso,
       validated_by: user.id,
+      last_activity_at: nowIso,
     })
     .eq("id", studentId)
     .eq("tenant_id", tenantId)

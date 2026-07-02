@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getDocumentConfig } from "@/lib/constants/documents";
 import { validateMagicLinkForDossier } from "@/lib/dossier/magic-link";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { touchLastActivity } from "@/lib/students/touch-last-activity";
 import type { DocumentType } from "@/lib/types/documents";
 
 type UploadResult = { success: true } | { error: string };
@@ -137,6 +138,8 @@ export async function uploadDocument(
     await admin.storage.from("documents-eleves").remove([storagePath]);
     return { error: "Impossible d'enregistrer le document en base." };
   }
+
+  await touchLastActivity(admin, magicLink.student_id);
 
   const { data: allDocuments } = await admin
     .from("documents")
