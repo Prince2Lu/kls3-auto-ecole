@@ -5,6 +5,7 @@ import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
+import { ManualReminderButton } from "@/components/dashboard/ManualReminderButton";
 
 type StudentDetailPageProps = {
   params: Promise<{ tenant: string; studentId: string }>;
@@ -138,6 +139,16 @@ export default async function StudentDetailPage({
               nom={student.nom}
               status={student.status}
             />
+            
+            <ManualReminderButton
+              studentId={studentId}
+              tenantId={tenant.id}
+              tenantSlug={slug}
+             
+              status={student.status}
+            
+            />
+            
           </div>
         </div>
       </div>
