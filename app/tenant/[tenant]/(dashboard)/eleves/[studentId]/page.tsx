@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { ManualReminderButton } from "@/components/dashboard/ManualReminderButton";
+import type { OcrExtractionStatus } from "@/lib/types/ocr";
 
 type StudentDetailPageProps = {
   params: Promise<{ tenant: string; studentId: string }>;
@@ -80,17 +81,17 @@ export default async function StudentDetailPage({
     validatorName = name ?? null;
   }
 
-  const pendingOcr = (documents ?? []).flatMap((doc) =>
-    (doc.ocr_extractions ?? [])
-      .filter((e) => !e.validated_at)
-      .map((extraction) => ({ ...extraction, documentType: doc.type }))
+  const ocrExtractions = (documents ?? []).flatMap((doc) =>
+    (doc.ocr_extractions ?? []).map((extraction) => ({
+      ...extraction,
+      documentType: doc.type as "cni" | "rib",
+    }))
   );
 
-  const validatedOcr = (documents ?? []).flatMap((doc) =>
-    (doc.ocr_extractions ?? [])
-      .filter((e) => e.validated_at)
-      .map((extraction) => ({ ...extraction, documentType: doc.type }))
+  const needsAttentionOcr = ocrExtractions.filter(
+    (e) => e.status !== "validated"
   );
+  const validatedOcr = ocrExtractions.filter((e) => e.status === "validated");
 
   return (
     <div className="space-y-8">
@@ -153,20 +154,27 @@ export default async function StudentDetailPage({
         </div>
       </div>
 
-      {pendingOcr.length > 0 && (
+      {needsAttentionOcr.length > 0 && (
         <section className="space-y-4">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-700">
-            Validations OCR en attente
+            Suivi OCR
           </h2>
-          {pendingOcr.map((extraction) => (
+          {needsAttentionOcr.map((extraction) => (
             <OcrValidationCard
               key={extraction.id}
               extractionId={extraction.id}
+              tenantId={tenant.id}
+              tenantSlug={slug}
+              studentId={studentId}
               documentType={extraction.documentType}
+              status={extraction.status as OcrExtractionStatus}
               extractedData={
                 extraction.extracted_data as Record<string, string>
               }
               ibanChecksumValid={extraction.iban_checksum_valid}
+              mrzChecksumValid={extraction.mrz_checksum_valid}
+              attemptCount={extraction.attempt_count}
+              entryMethod={extraction.entry_method as "ocr" | "manual"}
               validatedAt={extraction.validated_at}
             />
           ))}
@@ -243,11 +251,18 @@ export default async function StudentDetailPage({
               <OcrValidationCard
                 key={extraction.id}
                 extractionId={extraction.id}
+                tenantId={tenant.id}
+                tenantSlug={slug}
+                studentId={studentId}
                 documentType={extraction.documentType}
+                status={extraction.status as OcrExtractionStatus}
                 extractedData={
                   extraction.extracted_data as Record<string, string>
                 }
                 ibanChecksumValid={extraction.iban_checksum_valid}
+                mrzChecksumValid={extraction.mrz_checksum_valid}
+                attemptCount={extraction.attempt_count}
+                entryMethod={extraction.entry_method as "ocr" | "manual"}
                 validatedAt={extraction.validated_at}
               />
             ))}

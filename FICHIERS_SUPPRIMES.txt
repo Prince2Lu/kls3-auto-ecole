@@ -1,0 +1,2 @@
+app/api/documents/upload/route.ts (SUPPRIMÉ)
+app/api/ocr/validate/route.ts (SUPPRIMÉ)

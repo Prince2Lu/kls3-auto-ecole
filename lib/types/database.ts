@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       documents: {
@@ -37,7 +62,7 @@ export type Database = {
           size_bytes?: number | null
           status?: string | null
           student_id: string
-          tenant_id?: string
+          tenant_id: string
           type: string
           uploaded_at?: string | null
         }
@@ -60,6 +85,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "public_tenant_branding"
             referencedColumns: ["id"]
           },
           {
@@ -150,6 +182,13 @@ export type Database = {
             foreignKeyName: "magic_links_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
+            referencedRelation: "public_tenant_branding"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "magic_links_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
@@ -157,29 +196,47 @@ export type Database = {
       }
       ocr_extractions: {
         Row: {
+          attempt_count: number
           created_at: string | null
           document_id: string
+          document_type: string
+          entry_method: string
           extracted_data: Json
           iban_checksum_valid: boolean | null
           id: string
+          mrz_checksum_valid: boolean | null
+          status: string
+          tenant_id: string
           validated_at: string | null
           validated_by: string | null
         }
         Insert: {
+          attempt_count?: number
           created_at?: string | null
           document_id: string
+          document_type: string
+          entry_method?: string
           extracted_data: Json
           iban_checksum_valid?: boolean | null
           id?: string
+          mrz_checksum_valid?: boolean | null
+          status?: string
+          tenant_id: string
           validated_at?: string | null
           validated_by?: string | null
         }
         Update: {
+          attempt_count?: number
           created_at?: string | null
           document_id?: string
+          document_type?: string
+          entry_method?: string
           extracted_data?: Json
           iban_checksum_valid?: boolean | null
           id?: string
+          mrz_checksum_valid?: boolean | null
+          status?: string
+          tenant_id?: string
           validated_at?: string | null
           validated_by?: string | null
         }
@@ -189,6 +246,20 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocr_extractions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "public_tenant_branding"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ocr_extractions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -224,6 +295,13 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reminders_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "public_tenant_branding"
             referencedColumns: ["id"]
           },
           {
@@ -551,6 +629,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

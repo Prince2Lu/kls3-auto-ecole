@@ -6,6 +6,7 @@ import { getDocumentConfig } from "@/lib/constants/documents";
 import { validateMagicLinkForDossier } from "@/lib/dossier/magic-link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { touchLastActivity } from "@/lib/students/touch-last-activity";
+import { processDocumentOcr } from "@/lib/ocr/process-document";
 import type { DocumentType } from "@/lib/types/documents";
 
 type UploadResult = { success: true } | { error: string };
@@ -125,9 +126,11 @@ export async function uploadDocument(
     uploaded_at: now,
   };
 
-  const { error: upsertError } = await admin
+  const { data: upsertedDocument, error: upsertError } = await admin
     .from("documents")
-    .upsert(documentRow, { onConflict: "student_id,type" });
+    .upsert(documentRow, { onConflict: "student_id,type" })
+    .select("id")
+    .single();
 
   if (upsertError) {
     console.error("[uploadDocument] Upsert documents échoué:", {
@@ -140,6 +143,26 @@ export async function uploadDocument(
   }
 
   await touchLastActivity(admin, magicLink.student_id);
+
+  // OCR (US15/US16) : uniquement pour les documents qui portent des données
+  // à extraire (CNI, RIB) — jamais bloquant pour l'élève, une panne Vision
+  // API ne doit jamais faire échouer l'upload.
+  if (documentType === "cni" || documentType === "rib") {
+    try {
+      await processDocumentOcr(admin, {
+        documentId: upsertedDocument.id,
+        tenantId: magicLink.tenant_id,
+        documentType,
+        buffer,
+        mimeType: file.type,
+      });
+    } catch (ocrError) {
+      console.error("[uploadDocument] Traitement OCR échoué:", {
+        documentId: upsertedDocument.id,
+        error: ocrError instanceof Error ? ocrError.message : ocrError,
+      });
+    }
+  }
 
   const { data: allDocuments } = await admin
     .from("documents")
