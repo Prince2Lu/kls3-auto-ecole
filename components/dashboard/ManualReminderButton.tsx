@@ -1,4 +1,3 @@
-cat > components/dashboard/ManualReminderButton.tsx << 'EOF'
 "use client";
 
 import { useState, useTransition } from "react";
@@ -11,18 +10,14 @@ type ManualReminderButtonProps = {
   status: string | null;
 };
 
+type ReminderFeedback = { type: "success" | "error"; message: string } | null;
+
 const ELIGIBLE_STATUSES = new Set(["document_pending", "en_attente"]);
 
-export function ManualReminderButton({
-  studentId,
-  tenantId,
-  tenantSlug,
-  status,
-}: ManualReminderButtonProps) {
+export function ManualReminderButton(props: ManualReminderButtonProps) {
+  const { studentId, tenantId, tenantSlug, status } = props;
   const [isPending, startTransition] = useTransition();
-  const [feedback, setFeedback] = useState
-    { type: "success" | "error"; message: string } | null
-  >(null);
+  const [feedback, setFeedback] = useState<ReminderFeedback>(null);
 
   if (!status || !ELIGIBLE_STATUSES.has(status)) {
     return null;
@@ -51,9 +46,11 @@ export function ManualReminderButton({
       </button>
       {feedback && (
         <p
-          className={`text-xs ${
-            feedback.type === "success" ? "text-emerald-700" : "text-red-600"
-          }`}
+          className={
+            feedback.type === "success"
+              ? "text-xs text-emerald-700"
+              : "text-xs text-red-600"
+          }
         >
           {feedback.message}
         </p>

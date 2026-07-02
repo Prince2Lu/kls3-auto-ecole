@@ -1,5 +1,3 @@
-mkdir -p lib/actions
-cat > lib/actions/send-manual-reminder.ts << 'EOF'
 "use server";
 
 import { revalidatePath } from "next/cache";
