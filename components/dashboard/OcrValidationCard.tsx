@@ -8,6 +8,7 @@ import {
   submitManualOcrEntry,
 } from "@/app/tenant/[tenant]/(dashboard)/eleves/[studentId]/ocr-actions";
 import type { OcrExtractionStatus } from "@/lib/types/ocr";
+import { formatDateOnly } from "@/lib/utils/date";
 
 type OcrValidationCardProps = {
   extractionId: string;
@@ -232,10 +233,15 @@ export function OcrValidationCard({
 
   function formatDeclaredDate(value: string | null | undefined) {
     if (!value?.trim()) return "non renseignée";
-    const [year, month, day] = value.split("-").map(Number);
-    const date = new Date(year, month - 1, day);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleDateString("fr-FR");
+    return formatDateOnly(value) || value;
+  }
+
+  function formatExtractedDisplayValue(key: string, value: string) {
+    if (!value) return "—";
+    if (key === "date_naissance") {
+      return formatDateOnly(value) || value;
+    }
+    return value;
   }
 
   return (
@@ -269,7 +275,9 @@ export function OcrValidationCard({
         {Object.entries(extractedData).map(([key, value]) => (
           <div key={key} className="flex gap-3 px-3 py-2">
             <dt className="w-28 shrink-0 text-zinc-500">{key}</dt>
-            <dd className="font-mono text-zinc-900">{value || "—"}</dd>
+            <dd className="font-mono text-zinc-900">
+              {formatExtractedDisplayValue(key, value)}
+            </dd>
           </div>
         ))}
       </dl>

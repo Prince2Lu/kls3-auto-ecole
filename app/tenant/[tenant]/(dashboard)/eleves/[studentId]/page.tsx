@@ -2,6 +2,7 @@ import { OcrValidationCard } from "@/components/dashboard/OcrValidationCard";
 import { ValidateDossierButton } from "@/components/dashboard/ValidateDossierButton";
 import { createClient } from "@/lib/supabase/server";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
+import { formatDateOnly } from "@/lib/utils/date";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
@@ -41,13 +42,6 @@ const DOC_STATUS_BADGE: Record<string, string> = {
   recu: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
   transferred_to_drive: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
 };
-
-function formatDateOnly(value: string) {
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString("fr-FR");
-}
 
 export default async function StudentDetailPage({
   params,
