@@ -1,6 +1,6 @@
 import { DocumentUploadCard } from "@/components/dossier/DocumentUploadCard";
 import { DocumentsChecklist } from "@/components/dossier/DocumentsChecklist";
-import { REQUIRED_DOCUMENT_TYPES } from "@/lib/constants/documents";
+import { computeRequiredDocumentTypes } from "@/lib/constants/documents";
 import { validateMagicLinkForDossier } from "@/lib/dossier/magic-link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
@@ -73,7 +73,7 @@ export default async function DossierPage({
 
   const { data: student } = await admin
     .from("students")
-    .select("nom, prenom")
+    .select("nom, prenom, date_of_birth")
     .eq("id", magicLink.student_id)
     .maybeSingle();
 
@@ -89,6 +89,7 @@ export default async function DossierPage({
     .filter((doc): doc is NonNullable<typeof doc> => doc !== null);
 
   const documentsByType = new Map(documents.map((doc) => [doc.type, doc]));
+  const requiredTypes = computeRequiredDocumentTypes(student?.date_of_birth ?? null);
 
   return (
     <div className="mx-auto max-w-lg space-y-6 px-6 py-8">
@@ -102,10 +103,10 @@ export default async function DossierPage({
         </p>
       </div>
 
-      <DocumentsChecklist documents={documents} />
+      <DocumentsChecklist documents={documents} requiredTypes={requiredTypes} />
 
       <div className="space-y-4">
-        {REQUIRED_DOCUMENT_TYPES.map((config) => (
+        {requiredTypes.map((config) => (
           <DocumentUploadCard
             key={config.type}
             config={config}

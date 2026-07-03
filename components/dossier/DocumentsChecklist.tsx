@@ -1,4 +1,4 @@
-import { REQUIRED_DOCUMENT_TYPES } from "@/lib/constants/documents";
+import type { RequiredDocumentConfig } from "@/lib/constants/documents";
 import {
   isDocumentReceived,
   type DocumentType,
@@ -7,23 +7,27 @@ import {
 
 type DocumentsChecklistProps = {
   documents: StudentDocument[];
+  requiredTypes: readonly RequiredDocumentConfig[];
 };
 
-export function DocumentsChecklist({ documents }: DocumentsChecklistProps) {
+export function DocumentsChecklist({
+  documents,
+  requiredTypes,
+}: DocumentsChecklistProps) {
   const byType = new Map<DocumentType, StudentDocument>();
   for (const doc of documents) {
     byType.set(doc.type, doc);
   }
 
-  const receivedCount = REQUIRED_DOCUMENT_TYPES.filter((config) =>
+  const receivedCount = requiredTypes.filter((config) =>
     isDocumentReceived(byType.get(config.type))
   ).length;
 
-  const missing = REQUIRED_DOCUMENT_TYPES.filter(
+  const missing = requiredTypes.filter(
     (config) => !isDocumentReceived(byType.get(config.type))
   );
 
-  const total = REQUIRED_DOCUMENT_TYPES.length;
+  const total = requiredTypes.length;
   const complete = receivedCount === total;
 
   return (

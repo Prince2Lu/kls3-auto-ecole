@@ -2,7 +2,7 @@
 
 import { computeStudentStatus } from "@/lib/documents/compute-student-status";
 import { revalidatePath } from "next/cache";
-import { getDocumentConfig } from "@/lib/constants/documents";
+import { getDocumentConfig, computeRequiredDocumentTypes } from "@/lib/constants/documents";
 import { validateMagicLinkForDossier } from "@/lib/dossier/magic-link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { touchLastActivity } from "@/lib/students/touch-last-activity";
@@ -171,13 +171,18 @@ export async function uploadDocument(
 
   const { data: studentRow } = await admin
     .from("students")
-    .select("status")
+    .select("status, date_of_birth")
     .eq("id", magicLink.student_id)
     .maybeSingle();
 
+  const requiredTypes = computeRequiredDocumentTypes(
+    studentRow?.date_of_birth ?? null
+  );
+
   const newStatus = computeStudentStatus(
     studentRow?.status ?? null,
-    allDocuments ?? []
+    allDocuments ?? [],
+    requiredTypes
   );
 
   if (newStatus !== studentRow?.status) {

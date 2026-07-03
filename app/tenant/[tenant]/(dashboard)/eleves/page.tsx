@@ -1,4 +1,5 @@
 import { StudentsTable } from "@/components/dashboard/StudentsTable";
+import { computeRequiredDocumentTypes } from "@/lib/constants/documents";
 import { createClient } from "@/lib/supabase/server";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { notFound } from "next/navigation";
@@ -24,6 +25,7 @@ export default async function ElevesPage({ params }: ElevesPageProps) {
       nom,
       prenom,
       status,
+      date_of_birth,
       created_at,
       last_activity_at,
       formulas ( label, documents_requis ),
@@ -34,7 +36,9 @@ export default async function ElevesPage({ params }: ElevesPageProps) {
     .order("created_at", { ascending: false });
 
   const rows = (students ?? []).map((student) => {
-    const required = student.formulas?.documents_requis ?? 4;
+    const required = computeRequiredDocumentTypes(
+      student.date_of_birth ?? null
+    ).length;
     const uploaded = (student.documents ?? []).filter(
       (doc) => doc.status !== "pending"
     ).length;
