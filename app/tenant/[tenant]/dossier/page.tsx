@@ -80,7 +80,7 @@ export default async function DossierPage({
   const { data: documentRows } = await admin
     .from("documents")
     .select(
-      "id, tenant_id, student_id, type, status, file_path, original_filename, mime_type, size_bytes, uploaded_at"
+      "id, tenant_id, student_id, type, status, file_path, original_filename, mime_type, size_bytes, uploaded_at, date_document"
     )
     .eq("student_id", magicLink.student_id);
 

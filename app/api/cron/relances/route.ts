@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { computeStudentsToRemind } from "@/lib/relances/compute-students-to-remind";
+import { checkAndNotifyDomicilePerimes } from "@/lib/relances/check-domicile-perimes";
 import { getOrCreateActiveMagicLinkUrl } from "@/lib/relances/magic-link";
 import { sendReminderEmail } from "@/lib/relances/send-reminder";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -36,6 +37,7 @@ export async function GET(request: Request) {
   }
 
   let totalSent = 0;
+  let totalDomicilePerimes = 0;
   const now = new Date();
 
   for (const tenant of tenants ?? []) {
@@ -47,92 +49,89 @@ export async function GET(request: Request) {
       .eq("tenant_id", tenant.id)
       .in("status", ["document_pending", "en_attente"]);
 
-    if (studentsError) {
+    if (!studentsError && students?.length) {
+      const studentIds = students.map((s) => s.id);
+
+      const { data: reminders, error: remindersError } = await admin
+        .from("reminders")
+        .select("student_id, sent_at")
+        .in("student_id", studentIds)
+        .order("sent_at", { ascending: false });
+
+      if (!remindersError) {
+        const lastReminderByStudent = new Map<string, string>();
+        for (const reminder of reminders ?? []) {
+          if (!reminder.sent_at || lastReminderByStudent.has(reminder.student_id)) {
+            continue;
+          }
+          lastReminderByStudent.set(reminder.student_id, reminder.sent_at);
+        }
+
+        const toRemind = computeStudentsToRemind(
+          students,
+          lastReminderByStudent,
+          delai,
+          now
+        );
+
+        for (const student of toRemind) {
+          if (!student.email) {
+            continue;
+          }
+
+          const magicLinkUrl = await getOrCreateActiveMagicLinkUrl(
+            admin,
+            tenant,
+            student
+          );
+
+          if (!magicLinkUrl) {
+            continue;
+          }
+
+          const sendResult = await sendReminderEmail(
+            tenant,
+            { email: student.email, prenom: student.prenom },
+            magicLinkUrl
+          );
+
+          if (!sendResult.success) {
+            continue;
+          }
+
+          const { error: insertError } = await admin.from("reminders").insert({
+            tenant_id: tenant.id,
+            student_id: student.id,
+            sent_at: now.toISOString(),
+            type: "auto",
+          });
+
+          if (insertError) {
+            console.error(
+              `[cron/relances] Insert reminder student ${student.id}:`,
+              insertError.message
+            );
+            continue;
+          }
+
+          totalSent++;
+        }
+      } else {
+        console.error(
+          `[cron/relances] Lecture reminders tenant ${tenant.id}:`,
+          remindersError.message
+        );
+      }
+    } else if (studentsError) {
       console.error(
         `[cron/relances] Lecture students tenant ${tenant.id}:`,
         studentsError.message
       );
-      continue;
     }
 
-    if (!students?.length) {
-      continue;
-    }
-
-    const studentIds = students.map((s) => s.id);
-
-    const { data: reminders, error: remindersError } = await admin
-      .from("reminders")
-      .select("student_id, sent_at")
-      .in("student_id", studentIds)
-      .order("sent_at", { ascending: false });
-
-    if (remindersError) {
-      console.error(
-        `[cron/relances] Lecture reminders tenant ${tenant.id}:`,
-        remindersError.message
-      );
-      continue;
-    }
-
-    const lastReminderByStudent = new Map<string, string>();
-    for (const reminder of reminders ?? []) {
-      if (!reminder.sent_at || lastReminderByStudent.has(reminder.student_id)) {
-        continue;
-      }
-      lastReminderByStudent.set(reminder.student_id, reminder.sent_at);
-    }
-
-    const toRemind = computeStudentsToRemind(
-      students,
-      lastReminderByStudent,
-      delai,
-      now
-    );
-
-    for (const student of toRemind) {
-      if (!student.email) {
-        continue;
-      }
-
-      const magicLinkUrl = await getOrCreateActiveMagicLinkUrl(
-        admin,
-        tenant,
-        student
-      );
-
-      if (!magicLinkUrl) {
-        continue;
-      }
-
-      const sendResult = await sendReminderEmail(
-        tenant,
-        { email: student.email, prenom: student.prenom },
-        magicLinkUrl
-      );
-
-      if (!sendResult.success) {
-        continue;
-      }
-
-      const { error: insertError } = await admin.from("reminders").insert({
-        tenant_id: tenant.id,
-        student_id: student.id,
-        sent_at: now.toISOString(),
-        type: "auto",
-      });
-
-      if (insertError) {
-        console.error(
-          `[cron/relances] Insert reminder student ${student.id}:`,
-          insertError.message
-        );
-        continue;
-      }
-
-      totalSent++;
-    }
+    const domicilePerimes = await checkAndNotifyDomicilePerimes(admin, tenant, now);
+    totalDomicilePerimes += domicilePerimes;
   }
 
-  return NextResponse.json({ success: true, totalSent });
+  return NextResponse.json({ success: true, totalSent, totalDomicilePerimes });
 }

@@ -3,6 +3,10 @@
 import { computeStudentStatus } from "@/lib/documents/compute-student-status";
 import { revalidatePath } from "next/cache";
 import { getDocumentConfig, computeRequiredDocumentTypes } from "@/lib/constants/documents";
+import {
+  isDatePerime,
+  JUSTIFICATIF_DOMICILE_VALIDITY_MONTHS,
+} from "@/lib/documents/date-validity";
 import { validateMagicLinkForDossier } from "@/lib/dossier/magic-link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { touchLastActivity } from "@/lib/students/touch-last-activity";
@@ -15,12 +19,31 @@ function sanitizeFilename(filename: string) {
   return filename.replace(/[^a-zA-Z0-9._-]/g, "_");
 }
 
+function isValidDeclaredDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return false;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date <= today;
+}
+
 export async function uploadDocument(
   formData: FormData
 ): Promise<UploadResult> {
   const token = String(formData.get("token") ?? "").trim();
   const tenantSlug = String(formData.get("tenantSlug") ?? "").trim();
   const documentType = String(formData.get("documentType") ?? "").trim() as DocumentType;
+  const dateDocument = String(formData.get("dateDocument") ?? "").trim();
   const file = formData.get("file");
 
   if (!token || !tenantSlug) {
@@ -44,6 +67,12 @@ export async function uploadDocument(
 
   if (!config.acceptMimeTypes.includes(file.type)) {
     return { error: "Format de fichier non accepté." };
+  }
+
+  if (config.requiresDeclaredDate) {
+    if (!isValidDeclaredDate(dateDocument)) {
+      return { error: "Merci d'indiquer la date d'émission du document." };
+    }
   }
 
   let admin;
@@ -114,16 +143,23 @@ export async function uploadDocument(
   }
 
   const now = new Date().toISOString();
+  const initialStatus =
+    config.requiresDeclaredDate && dateDocument
+      ? isDatePerime(dateDocument, JUSTIFICATIF_DOMICILE_VALIDITY_MONTHS)
+        ? "perime"
+        : "recu"
+      : "recu";
   const documentRow = {
     tenant_id: magicLink.tenant_id,
     student_id: magicLink.student_id,
     type: documentType,
-    status: "recu",
+    status: initialStatus,
     file_path: storagePath,
     original_filename: file.name,
     mime_type: file.type,
     size_bytes: file.size,
     uploaded_at: now,
+    date_document: config.requiresDeclaredDate ? dateDocument : null,
   };
 
   const { data: upsertedDocument, error: upsertError } = await admin

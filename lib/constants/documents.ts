@@ -7,6 +7,7 @@ export type RequiredDocumentConfig = {
   accept: string;
   acceptMimeTypes: readonly string[];
   maxBytes: number;
+  requiresDeclaredDate?: boolean;
 };
 
 const TEN_MB = 10 * 1024 * 1024;
@@ -25,6 +26,14 @@ export const REQUIRED_DOCUMENT_TYPES: readonly RequiredDocumentConfig[] = [
     accept: ".jpg,.jpeg,.png,image/jpeg,image/png",
     acceptMimeTypes: ["image/jpeg", "image/png"],
     maxBytes: TEN_MB,
+  },
+  {
+    type: "domicile",
+    label: "Justificatif de domicile",
+    accept: ".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf",
+    acceptMimeTypes: ["image/jpeg", "image/png", "application/pdf"],
+    maxBytes: TEN_MB,
+    requiresDeclaredDate: true,
   },
   {
     type: "assr",

@@ -25,7 +25,11 @@ export function DocumentUploadCard({
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [justUploaded, setJustUploaded] = useState(false);
+  const [declaredDate, setDeclaredDate] = useState(
+    document?.date_document ?? ""
+  );
 
+  const isPerime = document?.status === "perime";
   const received = isDocumentReceived(document) || justUploaded;
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -33,6 +37,13 @@ export function DocumentUploadCard({
     if (!file) return;
 
     setError(null);
+
+    if (config.requiresDeclaredDate && !declaredDate) {
+      setError("Merci d'indiquer la date d'émission du document.");
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
+
     setSelectedName(file.name);
     setJustUploaded(false);
 
@@ -41,6 +52,9 @@ export function DocumentUploadCard({
     formData.append("tenantSlug", tenantSlug);
     formData.append("documentType", config.type);
     formData.append("file", file);
+    if (config.requiresDeclaredDate) {
+      formData.append("dateDocument", declaredDate);
+    }
 
     startTransition(async () => {
       const result = await uploadDocument(formData);
@@ -57,6 +71,17 @@ export function DocumentUploadCard({
     });
   }
 
+  const badgeLabel = isPerime
+    ? "Périmé — à renouveler"
+    : received
+      ? "Reçu"
+      : "Manquant";
+  const badgeClasses = isPerime
+    ? "bg-orange-100 text-orange-800"
+    : received
+      ? "bg-emerald-100 text-emerald-800"
+      : "bg-zinc-100 text-zinc-600";
+
   return (
     <div className="rounded-md border border-zinc-200 bg-white p-4">
       <div className="flex items-start justify-between gap-3">
@@ -67,13 +92,9 @@ export function DocumentUploadCard({
           </p>
         </div>
         <span
-          className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            received
-              ? "bg-emerald-100 text-emerald-800"
-              : "bg-zinc-100 text-zinc-600"
-          }`}
+          className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${badgeClasses}`}
         >
-          {received ? "Reçu" : "Manquant"}
+          {badgeLabel}
         </span>
       </div>
 
@@ -81,6 +102,25 @@ export function DocumentUploadCard({
         <p className="mt-2 truncate text-xs text-zinc-600">
           Fichier : {document?.original_filename ?? selectedName}
         </p>
+      )}
+
+      {config.requiresDeclaredDate && (
+        <div className="mt-3">
+          <label
+            htmlFor={`date-${config.type}`}
+            className="mb-1 block text-xs font-medium text-zinc-600"
+          >
+            Date d&apos;émission du document
+          </label>
+          <input
+            id={`date-${config.type}`}
+            type="date"
+            value={declaredDate}
+            onChange={(e) => setDeclaredDate(e.target.value)}
+            disabled={isPending}
+            className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 disabled:opacity-50"
+          />
+        </div>
       )}
 
       <div className="mt-3">

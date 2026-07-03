@@ -1,6 +1,6 @@
-export type DocumentType = "cni" | "photo" | "assr" | "rib" | "jdc";
+export type DocumentType = "cni" | "photo" | "assr" | "rib" | "jdc" | "domicile";
 
-export type DocumentStatus = "manquant" | "recu";
+export type DocumentStatus = "manquant" | "recu" | "perime";
 
 export interface StudentDocument {
   id: string;
@@ -13,6 +13,7 @@ export interface StudentDocument {
   mime_type: string | null;
   size_bytes: number | null;
   uploaded_at: string | null;
+  date_document: string | null;
 }
 
 export function isDocumentReceived(doc: StudentDocument | undefined): boolean {
@@ -31,14 +32,19 @@ export function toStudentDocument(row: {
   mime_type: string | null;
   size_bytes: number | null;
   uploaded_at: string | null;
+  date_document?: string | null;
 }): StudentDocument | null {
   const type = row.type as DocumentType;
-  if (!["cni", "photo", "assr", "rib", "jdc"].includes(type)) {
+  if (!["cni", "photo", "assr", "rib", "jdc", "domicile"].includes(type)) {
     return null;
   }
 
   const status: DocumentStatus =
-    row.status === "recu" && row.file_path ? "recu" : "manquant";
+    row.status === "recu" && row.file_path
+      ? "recu"
+      : row.status === "perime" && row.file_path
+        ? "perime"
+        : "manquant";
 
   return {
     id: row.id,
@@ -51,5 +57,6 @@ export function toStudentDocument(row: {
     mime_type: row.mime_type,
     size_bytes: row.size_bytes,
     uploaded_at: row.uploaded_at,
+    date_document: row.date_document ?? null,
   };
 }

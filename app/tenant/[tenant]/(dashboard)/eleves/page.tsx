@@ -40,7 +40,7 @@ export default async function ElevesPage({ params }: ElevesPageProps) {
       student.date_of_birth ?? null
     ).length;
     const uploaded = (student.documents ?? []).filter(
-      (doc) => doc.status !== "pending"
+      (doc) => doc.status === "recu"
     ).length;
 
     return {
