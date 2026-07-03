@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { validateIbanChecksum } from "@/lib/ocr/checksums";
+import { isDateNaissanceCoherente } from "@/lib/ocr/coherence";
 import type { Database } from "@/lib/types/database";
 import type { ManualCniEntry, ManualRibEntry } from "@/lib/types/ocr";
 
@@ -55,7 +56,9 @@ export async function confirmOcrExtraction(
 
   const { data: extraction } = await supabase
     .from("ocr_extractions")
-    .select("status, document_type, iban_checksum_valid, mrz_checksum_valid")
+    .select(
+      "status, document_type, iban_checksum_valid, mrz_checksum_valid, extracted_data"
+    )
     .eq("id", extractionId)
     .eq("tenant_id", tenantId)
     .maybeSingle();
@@ -81,6 +84,30 @@ export async function confirmOcrExtraction(
       error:
         "Checksum invalide — cette extraction ne peut pas être confirmée automatiquement. Utilisez la saisie manuelle.",
     };
+  }
+
+  if (extraction.document_type === "cni") {
+    const { data: student } = await supabase
+      .from("students")
+      .select("date_of_birth")
+      .eq("id", studentId)
+      .eq("tenant_id", tenantId)
+      .maybeSingle();
+
+    const extractedData = extraction.extracted_data as Record<
+      string,
+      string
+    > | null;
+    const extractedDate = extractedData?.date_naissance;
+
+    if (
+      !isDateNaissanceCoherente(extractedDate, student?.date_of_birth ?? null)
+    ) {
+      return {
+        error:
+          "Date de naissance déclarée par l'élève différente de celle lue sur la CNI — vérification manuelle requise.",
+      };
+    }
   }
 
   const { data, error } = await supabase

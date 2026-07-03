@@ -9,6 +9,31 @@ type FormulaOption = {
   name: string;
 };
 
+function isValidDateOfBirth(value: string): boolean {
+  if (!value) return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return false;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (date > today) return false;
+
+  const minBirthDate = new Date(today);
+  minBirthDate.setFullYear(today.getFullYear() - 12);
+  if (date > minBirthDate) return false;
+
+  return true;
+}
+
 type InscriptionFormProps = {
   formulas: FormulaOption[];
   tenantId: string;
@@ -33,10 +58,16 @@ export function InscriptionForm({
     const nom = String(formData.get("nom") ?? "").trim();
     const prenom = String(formData.get("prenom") ?? "").trim();
     const email = String(formData.get("email") ?? "").trim();
+    const date_of_birth = String(formData.get("date_of_birth") ?? "").trim();
     const formula_id = String(formData.get("formula_id") ?? "").trim();
 
     if (!nom || !prenom || !email) {
       setError("Tous les champs obligatoires doivent être remplis.");
+      return;
+    }
+
+    if (!isValidDateOfBirth(date_of_birth)) {
+      setError("Merci de renseigner une date de naissance valide.");
       return;
     }
 
@@ -52,7 +83,7 @@ export function InscriptionForm({
 
     startTransition(async () => {
       const result = await inscrireEleve(
-        { nom, prenom, email, formula_id },
+        { nom, prenom, email, date_of_birth, formula_id },
         tenantId,
         tenantSlug
       );
@@ -118,6 +149,21 @@ export function InscriptionForm({
           autoComplete="email"
           className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200"
           placeholder="marie.dupont@email.fr"
+        />
+      </div>
+      <div>
+        <label
+          htmlFor="date_of_birth"
+          className="mb-1.5 block text-sm font-medium text-zinc-700"
+        >
+          Date de naissance
+        </label>
+        <input
+          id="date_of_birth"
+          name="date_of_birth"
+          type="date"
+          required
+          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200"
         />
       </div>
       {formulas.length > 0 && (

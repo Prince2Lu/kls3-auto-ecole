@@ -22,6 +22,7 @@ type OcrValidationCardProps = {
   attemptCount: number;
   entryMethod: "ocr" | "manual";
   validatedAt: string | null;
+  declaredDateNaissance?: string | null;
 };
 
 const DOCUMENT_LABELS: Record<"cni" | "rib", string> = {
@@ -42,6 +43,7 @@ export function OcrValidationCard({
   attemptCount,
   entryMethod,
   validatedAt,
+  declaredDateNaissance,
 }: OcrValidationCardProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -221,6 +223,21 @@ export function OcrValidationCard({
     documentType === "rib" ? ibanChecksumValid : mrzChecksumValid;
   const checksumLabel = documentType === "rib" ? "IBAN" : "MRZ";
 
+  const extractedDateNaissance = extractedData.date_naissance?.trim();
+  const declaredDate = declaredDateNaissance?.trim();
+  const datesDivergent =
+    Boolean(extractedDateNaissance) &&
+    Boolean(declaredDate) &&
+    extractedDateNaissance !== declaredDate;
+
+  function formatDeclaredDate(value: string | null | undefined) {
+    if (!value?.trim()) return "non renseignée";
+    const [year, month, day] = value.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString("fr-FR");
+  }
+
   return (
     <div className="rounded-md border-2 border-amber-400 bg-amber-50/60 p-5 ring-1 ring-amber-200">
       <div className="mb-4 flex items-start justify-between gap-4">
@@ -256,6 +273,17 @@ export function OcrValidationCard({
           </div>
         ))}
       </dl>
+
+      {documentType === "cni" && (
+        <p
+          className={`mb-4 text-sm ${
+            datesDivergent ? "font-medium text-red-700" : "text-zinc-600"
+          }`}
+        >
+          Date déclarée à l&apos;inscription :{" "}
+          {formatDeclaredDate(declaredDateNaissance)}
+        </p>
+      )}
 
       {error && (
         <p className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">

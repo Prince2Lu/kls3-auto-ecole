@@ -12,6 +12,31 @@ import type { InscriptionFormData } from "@/lib/types/inscription";
 
 type InscriptionResult = { success: true } | { error: string };
 
+function isValidDateOfBirth(value: string): boolean {
+  if (!value) return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return false;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (date > today) return false;
+
+  const minBirthDate = new Date(today);
+  minBirthDate.setFullYear(today.getFullYear() - 12);
+  if (date > minBirthDate) return false;
+
+  return true;
+}
+
 type TenantRow = {
   id: string;
   name: string;
@@ -42,10 +67,15 @@ export async function inscrireEleve(
   const nom = formData.nom?.trim();
   const prenom = formData.prenom?.trim();
   const email = formData.email?.trim().toLowerCase();
+  const dateOfBirth = formData.date_of_birth?.trim();
   const formulaId = formData.formula_id?.trim() || null;
 
   if (!nom || !prenom || !email) {
     return { error: "Nom, prénom et email sont requis." };
+  }
+
+  if (!isValidDateOfBirth(dateOfBirth ?? "")) {
+    return { error: "Merci de renseigner une date de naissance valide." };
   }
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -151,6 +181,7 @@ export async function inscrireEleve(
       nom,
       prenom,
       email,
+      date_of_birth: dateOfBirth,
       formula_id: formulaId,
       status: "en_attente",
     })

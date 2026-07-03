@@ -42,6 +42,13 @@ const DOC_STATUS_BADGE: Record<string, string> = {
   transferred_to_drive: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
 };
 
+function formatDateOnly(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("fr-FR");
+}
+
 export default async function StudentDetailPage({
   params,
 }: StudentDetailPageProps) {
@@ -113,6 +120,9 @@ export default async function StudentDetailPage({
               {student.created_at
                 ? new Date(student.created_at).toLocaleDateString("fr-FR")
                 : "—"}
+              {student.date_of_birth
+                ? ` · Né(e) le ${formatDateOnly(student.date_of_birth)}`
+                : ""}
             </p>
             {student.status === "complete" && student.validated_at && (
               <p className="mt-2 text-sm text-emerald-700">
@@ -176,6 +186,7 @@ export default async function StudentDetailPage({
               attemptCount={extraction.attempt_count}
               entryMethod={extraction.entry_method as "ocr" | "manual"}
               validatedAt={extraction.validated_at}
+              declaredDateNaissance={student.date_of_birth}
             />
           ))}
         </section>
@@ -264,6 +275,7 @@ export default async function StudentDetailPage({
                 attemptCount={extraction.attempt_count}
                 entryMethod={extraction.entry_method as "ocr" | "manual"}
                 validatedAt={extraction.validated_at}
+                declaredDateNaissance={student.date_of_birth}
               />
             ))}
           </div>

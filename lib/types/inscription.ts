@@ -2,6 +2,7 @@ export interface InscriptionFormData {
   nom: string;
   prenom: string;
   email: string;
+  date_of_birth: string;
   formula_id: string;
 }
 
