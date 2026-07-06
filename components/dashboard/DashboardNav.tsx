@@ -15,7 +15,6 @@ const NAV_ITEMS = [
     label: "Paramètres",
     match: (p: string) => p === "/parametres",
   },
-  { href: "/export", label: "Export", match: (p: string) => p === "/export" },
 ];
 
 export function DashboardNav() {

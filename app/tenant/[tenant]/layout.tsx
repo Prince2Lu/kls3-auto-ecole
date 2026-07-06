@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { fontDisplay, fontBody } from "@/lib/fonts";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 
 type TenantLayoutProps = {
@@ -17,14 +18,19 @@ export default async function TenantLayout({
     notFound();
   }
 
-  const primaryColor = tenant.primary_color ?? "#4B7BF5";
+  const brandColor = tenant.primary_color ?? "#3454D1";
 
   return (
     <div
-      style={{ "--tenant-primary": primaryColor } as React.CSSProperties}
-      className="min-h-full"
+      style={
+        {
+          "--brand": brandColor,
+          "--tenant-primary": "var(--brand)",
+        } as React.CSSProperties
+      }
+      className={`${fontDisplay.variable} ${fontBody.variable} min-h-full font-body`}
     >
-      <header className="border-b border-zinc-200 bg-white px-6 py-4">
+      <header className="border-b border-border bg-white px-6 py-4">
         <div className="mx-auto flex max-w-6xl items-center gap-3">
           {tenant.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -36,12 +42,12 @@ export default async function TenantLayout({
           ) : (
             <div
               className="flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold text-white"
-              style={{ backgroundColor: primaryColor }}
+              style={{ backgroundColor: "var(--brand)" }}
             >
               {tenant.name.charAt(0)}
             </div>
           )}
-          <span className="text-lg font-semibold text-zinc-900">
+          <span className="font-display text-lg font-semibold text-ink">
             {tenant.name}
           </span>
         </div>

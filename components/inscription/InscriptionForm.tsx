@@ -1,13 +1,20 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { CheckCircle2 } from "lucide-react";
 import { inscrireEleve } from "@/app/tenant/[tenant]/inscription/actions";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input, Select } from "@/components/ui/Input";
 
 type FormulaOption = {
   id: string;
   name: string;
 };
+
+type FieldErrors = Partial<
+  Record<"prenom" | "nom" | "email" | "date_of_birth" | "formula_id", string>
+>;
 
 function isValidDateOfBirth(value: string): boolean {
   if (!value) return false;
@@ -34,6 +41,25 @@ function isValidDateOfBirth(value: string): boolean {
   return true;
 }
 
+function mapServerErrorToField(message: string): {
+  field?: keyof FieldErrors;
+  formError?: string;
+} {
+  if (message.includes("email")) {
+    return { field: "email", formError: message };
+  }
+  if (message.includes("date de naissance")) {
+    return { field: "date_of_birth", formError: message };
+  }
+  if (message.includes("formule")) {
+    return { field: "formula_id", formError: message };
+  }
+  if (message.includes("Nom") || message.includes("prénom")) {
+    return { formError: message };
+  }
+  return { formError: message };
+}
+
 type InscriptionFormProps = {
   formulas: FormulaOption[];
   tenantId: string;
@@ -45,13 +71,16 @@ export function InscriptionForm({
   tenantId,
   tenantSlug,
 }: InscriptionFormProps) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError(null);
+    setFieldErrors({});
+    setFormError(null);
 
     const form = event.currentTarget;
     const formData = new FormData(form);
@@ -61,23 +90,28 @@ export function InscriptionForm({
     const date_of_birth = String(formData.get("date_of_birth") ?? "").trim();
     const formula_id = String(formData.get("formula_id") ?? "").trim();
 
-    if (!nom || !prenom || !email) {
-      setError("Tous les champs obligatoires doivent être remplis.");
-      return;
-    }
+    const errors: FieldErrors = {};
 
+    if (!prenom) {
+      errors.prenom = "Le prénom est requis.";
+    }
+    if (!nom) {
+      errors.nom = "Le nom est requis.";
+    }
+    if (!email) {
+      errors.email = "L'email est requis.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = "Adresse email invalide.";
+    }
     if (!isValidDateOfBirth(date_of_birth)) {
-      setError("Merci de renseigner une date de naissance valide.");
-      return;
+      errors.date_of_birth = "Merci de renseigner une date de naissance valide.";
     }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Adresse email invalide.");
-      return;
-    }
-
     if (formulas.length > 0 && !formula_id) {
-      setError("Veuillez sélectionner une formule.");
+      errors.formula_id = "Veuillez sélectionner une formule.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
 
@@ -89,119 +123,130 @@ export function InscriptionForm({
       );
 
       if ("error" in result) {
-        setError(result.error);
+        const mapped = mapServerErrorToField(result.error);
+        if (mapped.field) {
+          setFieldErrors({ [mapped.field]: result.error });
+        } else {
+          setFormError(mapped.formError ?? result.error);
+        }
         return;
       }
 
-      router.push("/inscription/confirmation");
+      setSubmittedEmail(email);
+      setIsSuccess(true);
     });
   }
 
+  if (isSuccess) {
+    return (
+      <Card className="p-6 sm:p-8">
+        <div className="text-center">
+          <CheckCircle2
+            className="mx-auto h-12 w-12 text-success"
+            aria-hidden
+          />
+          <h2 className="mt-4 font-display text-xl font-semibold text-ink">
+            Votre dossier est ouvert !
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-neutral">
+            Un email a été envoyé à{" "}
+            <span className="font-medium text-ink">{submittedEmail}</span> avec
+            un lien pour déposer vos pièces justificatives.
+          </p>
+          <Button
+            type="button"
+            variant="secondary"
+            className="mt-6"
+            onClick={() => setIsSuccess(false)}
+          >
+            Modifier mes informations
+          </Button>
+        </div>
+      </Card>
+    );
+  }
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-5 rounded-md border border-zinc-200 bg-white p-6"
-    >
-      <div>
-        <label
-          htmlFor="prenom"
-          className="mb-1.5 block text-sm font-medium text-zinc-700"
-        >
-          Prénom
-        </label>
-        <input
+    <Card className="p-6 sm:p-8">
+      <h2 className="font-display text-lg font-semibold text-ink">
+        Créer mon dossier d&apos;inscription
+      </h2>
+      <form onSubmit={handleSubmit} className="mt-6 space-y-5" noValidate>
+        <Input
           id="prenom"
           name="prenom"
+          label="Prénom"
           type="text"
           required
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200"
           placeholder="Marie"
+          error={fieldErrors.prenom}
         />
-      </div>
-      <div>
-        <label
-          htmlFor="nom"
-          className="mb-1.5 block text-sm font-medium text-zinc-700"
-        >
-          Nom
-        </label>
-        <input
+        <Input
           id="nom"
           name="nom"
+          label="Nom"
           type="text"
           required
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200"
           placeholder="Dupont"
+          error={fieldErrors.nom}
         />
-      </div>
-      <div>
-        <label
-          htmlFor="email"
-          className="mb-1.5 block text-sm font-medium text-zinc-700"
-        >
-          Email
-        </label>
-        <input
+        <Input
           id="email"
           name="email"
+          label="Email"
           type="email"
           required
           autoComplete="email"
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200"
           placeholder="marie.dupont@email.fr"
+          error={fieldErrors.email}
         />
-      </div>
-      <div>
-        <label
-          htmlFor="date_of_birth"
-          className="mb-1.5 block text-sm font-medium text-zinc-700"
-        >
-          Date de naissance
-        </label>
-        <input
+        <Input
           id="date_of_birth"
           name="date_of_birth"
+          label="Date de naissance"
           type="date"
           required
-          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200"
+          error={fieldErrors.date_of_birth}
         />
-      </div>
-      {formulas.length > 0 && (
-        <div>
-          <label
-            htmlFor="formula_id"
-            className="mb-1.5 block text-sm font-medium text-zinc-700"
-          >
-            Formule
-          </label>
-          <select
+        {formulas.length > 0 && (
+          <Select
             id="formula_id"
             name="formula_id"
+            label="Formule"
             required
             defaultValue={formulas[0]?.id ?? ""}
-            className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200"
+            error={fieldErrors.formula_id}
           >
             {formulas.map((formula) => (
               <option key={formula.id} value={formula.id}>
                 {formula.name}
               </option>
             ))}
-          </select>
-        </div>
-      )}
-      {error && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
+          </Select>
+        )}
+        {formError && (
+          <p
+            className="rounded-md bg-danger-subtle px-3 py-2 text-sm text-danger"
+            role="alert"
+          >
+            {formError}
+          </p>
+        )}
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={isPending}
+          className="w-full py-2.5"
+        >
+          {isPending ? "Envoi en cours…" : "Démarrer mon dossier"}
+        </Button>
+        <p className="text-center text-xs leading-relaxed text-neutral">
+          Vos données sont traitées conformément au RGPD.{" "}
+          <a href="#" className="text-ink underline hover:text-brand">
+            Politique de confidentialité
+          </a>
         </p>
-      )}
-      <button
-        type="submit"
-        disabled={isPending}
-        className="w-full rounded-md py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-        style={{ backgroundColor: "var(--color-primary, var(--tenant-primary))" }}
-      >
-        {isPending ? "Envoi en cours…" : "S'inscrire"}
-      </button>
-    </form>
+      </form>
+    </Card>
   );
 }

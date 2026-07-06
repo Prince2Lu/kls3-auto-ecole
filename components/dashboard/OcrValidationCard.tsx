@@ -7,6 +7,7 @@ import {
   confirmOcrExtraction,
   submitManualOcrEntry,
 } from "@/app/tenant/[tenant]/(dashboard)/eleves/[studentId]/ocr-actions";
+import { Badge } from "@/components/ui/Badge";
 import type { OcrExtractionStatus } from "@/lib/types/ocr";
 import { formatDateOnly } from "@/lib/utils/date";
 
@@ -259,15 +260,9 @@ export function OcrValidationCard({
           </div>
         </div>
         {checksumValid !== null && (
-          <span
-            className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-medium ${
-              checksumValid
-                ? "bg-emerald-100 text-emerald-800"
-                : "bg-red-100 text-red-800"
-            }`}
-          >
+          <Badge variant={checksumValid ? "success" : "danger"}>
             {checksumLabel} {checksumValid ? "valide" : "invalide"}
-          </span>
+          </Badge>
         )}
       </div>
 

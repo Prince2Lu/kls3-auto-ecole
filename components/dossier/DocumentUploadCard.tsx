@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { uploadDocument } from "@/app/tenant/[tenant]/dossier/actions";
+import { Badge } from "@/components/ui/Badge";
 import type { RequiredDocumentConfig } from "@/lib/constants/documents";
 import { isDocumentReceived, type StudentDocument } from "@/lib/types/documents";
 
@@ -76,11 +77,7 @@ export function DocumentUploadCard({
     : received
       ? "Reçu"
       : "Manquant";
-  const badgeClasses = isPerime
-    ? "bg-orange-100 text-orange-800"
-    : received
-      ? "bg-emerald-100 text-emerald-800"
-      : "bg-zinc-100 text-zinc-600";
+  const badgeVariant = isPerime ? "danger" : received ? "success" : "neutral";
 
   return (
     <div className="rounded-md border border-zinc-200 bg-white p-4">
@@ -91,11 +88,7 @@ export function DocumentUploadCard({
             JPG, PNG ou PDF — max {Math.round(config.maxBytes / (1024 * 1024))} Mo
           </p>
         </div>
-        <span
-          className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${badgeClasses}`}
-        >
-          {badgeLabel}
-        </span>
+        <Badge variant={badgeVariant}>{badgeLabel}</Badge>
       </div>
 
       {received && (document?.original_filename || selectedName) && (

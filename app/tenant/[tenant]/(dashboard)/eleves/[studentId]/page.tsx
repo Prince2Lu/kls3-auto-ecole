@@ -1,5 +1,6 @@
 import { OcrValidationCard } from "@/components/dashboard/OcrValidationCard";
 import { ValidateDossierButton } from "@/components/dashboard/ValidateDossierButton";
+import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import { createClient } from "@/lib/supabase/server";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { formatDateOnly } from "@/lib/utils/date";
@@ -21,26 +22,28 @@ const STATUS_LABELS: Record<string, string> = {
   complete: "Complet",
 };
 
-const STATUS_BADGE: Record<string, string> = {
-  en_attente: "bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200",
-  document_pending: "bg-amber-100 text-amber-800 ring-1 ring-amber-200",
-  documents_complets: "bg-violet-100 text-violet-800 ring-1 ring-violet-200",
-  payment_pending: "bg-blue-100 text-blue-800 ring-1 ring-blue-200",
-  complete: "bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200",
+const STATUS_VARIANT: Record<string, BadgeVariant> = {
+  en_attente: "neutral",
+  document_pending: "neutral",
+  documents_complets: "warning",
+  payment_pending: "warning",
+  complete: "success",
 };
 
 const DOC_STATUS_LABELS: Record<string, string> = {
   pending: "En attente",
   uploaded: "Reçu",
   recu: "Reçu",
+  perime: "Périmé",
   transferred_to_drive: "Transféré Drive",
 };
 
-const DOC_STATUS_BADGE: Record<string, string> = {
-  pending: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
-  uploaded: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
-  recu: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
-  transferred_to_drive: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+const DOC_STATUS_VARIANT: Record<string, BadgeVariant> = {
+  pending: "warning",
+  uploaded: "success",
+  recu: "success",
+  perime: "danger",
+  transferred_to_drive: "success",
 };
 
 export default async function StudentDetailPage({
@@ -71,8 +74,7 @@ export default async function StudentDetailPage({
     .eq("student_id", studentId);
 
   const statusKey = student.status ?? "document_pending";
-  const statusBadge =
-    STATUS_BADGE[statusKey] ?? "bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200";
+  const statusVariant = STATUS_VARIANT[statusKey] ?? "neutral";
 
   let validatorName: string | null = null;
   if (student.validated_by) {
@@ -131,11 +133,9 @@ export default async function StudentDetailPage({
             )}
           </div>
           <div className="flex flex-col items-end gap-3">
-            <span
-              className={`inline-flex rounded-md px-2.5 py-1 text-xs font-medium ${statusBadge}`}
-            >
+            <Badge variant={statusVariant}>
               {STATUS_LABELS[statusKey] ?? statusKey}
-            </span>
+            </Badge>
             <ValidateDossierButton
               studentId={studentId}
               tenantId={tenant.id}
@@ -208,20 +208,16 @@ export default async function StudentDetailPage({
             <tbody className="divide-y divide-zinc-100 bg-white">
               {(documents ?? []).map((doc) => {
                 const docStatus = doc.status ?? "pending";
-                const docBadge =
-                  DOC_STATUS_BADGE[docStatus] ??
-                  "bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200";
+                const docVariant = DOC_STATUS_VARIANT[docStatus] ?? "neutral";
                 return (
                   <tr key={doc.id} className="hover:bg-zinc-50">
                     <td className="px-4 py-2.5 font-medium uppercase text-zinc-900">
                       {doc.type}
                     </td>
                     <td className="px-4 py-2.5">
-                      <span
-                        className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${docBadge}`}
-                      >
+                      <Badge variant={docVariant}>
                         {DOC_STATUS_LABELS[docStatus] ?? docStatus}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="px-4 py-2.5 tabular-nums text-zinc-600">
                       {doc.uploaded_at
