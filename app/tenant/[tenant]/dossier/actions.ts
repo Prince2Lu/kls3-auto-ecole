@@ -154,6 +154,7 @@ export async function uploadDocument(
     student_id: magicLink.student_id,
     type: documentType,
     status: initialStatus,
+    category: config.category,
     file_path: storagePath,
     original_filename: file.name,
     mime_type: file.type,

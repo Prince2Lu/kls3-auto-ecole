@@ -41,6 +41,7 @@ export type Database = {
     Tables: {
       documents: {
         Row: {
+          category: string
           date_document: string | null
           drive_file_id: string | null
           file_path: string | null
@@ -55,6 +56,7 @@ export type Database = {
           uploaded_at: string | null
         }
         Insert: {
+          category?: string
           date_document?: string | null
           drive_file_id?: string | null
           file_path?: string | null
@@ -69,6 +71,7 @@ export type Database = {
           uploaded_at?: string | null
         }
         Update: {
+          category?: string
           date_document?: string | null
           drive_file_id?: string | null
           file_path?: string | null
