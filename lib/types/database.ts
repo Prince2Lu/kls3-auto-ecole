@@ -44,6 +44,7 @@ export type Database = {
           category: string
           date_document: string | null
           drive_file_id: string | null
+          drive_transferred_at: string | null
           file_path: string | null
           id: string
           mime_type: string | null
@@ -59,6 +60,7 @@ export type Database = {
           category?: string
           date_document?: string | null
           drive_file_id?: string | null
+          drive_transferred_at?: string | null
           file_path?: string | null
           id?: string
           mime_type?: string | null
@@ -74,6 +76,7 @@ export type Database = {
           category?: string
           date_document?: string | null
           drive_file_id?: string | null
+          drive_transferred_at?: string | null
           file_path?: string | null
           id?: string
           mime_type?: string | null
@@ -323,6 +326,9 @@ export type Database = {
         Row: {
           created_at: string | null
           date_of_birth: string | null
+          drive_ants_folder_id: string | null
+          drive_facturation_folder_id: string | null
+          drive_student_folder_id: string | null
           email: string | null
           formula_id: string | null
           id: string
@@ -339,6 +345,9 @@ export type Database = {
         Insert: {
           created_at?: string | null
           date_of_birth?: string | null
+          drive_ants_folder_id?: string | null
+          drive_facturation_folder_id?: string | null
+          drive_student_folder_id?: string | null
           email?: string | null
           formula_id?: string | null
           id?: string
@@ -355,6 +364,9 @@ export type Database = {
         Update: {
           created_at?: string | null
           date_of_birth?: string | null
+          drive_ants_folder_id?: string | null
+          drive_facturation_folder_id?: string | null
+          drive_student_folder_id?: string | null
           email?: string | null
           formula_id?: string | null
           id?: string
@@ -434,6 +446,9 @@ export type Database = {
       tenants: {
         Row: {
           created_at: string | null
+          drive_connected_at: string | null
+          drive_connected_by: string | null
+          drive_refresh_token_encrypted: string | null
           email_expediteur: string | null
           google_drive_folder_id: string | null
           id: string
@@ -446,6 +461,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          drive_connected_at?: string | null
+          drive_connected_by?: string | null
+          drive_refresh_token_encrypted?: string | null
           email_expediteur?: string | null
           google_drive_folder_id?: string | null
           id?: string
@@ -458,6 +476,9 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          drive_connected_at?: string | null
+          drive_connected_by?: string | null
+          drive_refresh_token_encrypted?: string | null
           email_expediteur?: string | null
           google_drive_folder_id?: string | null
           id?: string

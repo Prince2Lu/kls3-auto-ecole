@@ -64,11 +64,37 @@ export default async function ParametresPage({ params }: ParametresPageProps) {
         </section>
         <section className="rounded-md border border-zinc-200 bg-white p-6">
           <h2 className="mb-2 font-medium text-zinc-800">Google Drive</h2>
-          <p className="text-sm text-zinc-500">
-            {tenant.google_drive_folder_id
-              ? `Dossier connecté : ${tenant.google_drive_folder_id}`
-              : "Non connecté — configurez OAuth Drive"}
-          </p>
+          {tenant.drive_refresh_token_encrypted ? (
+            <div className="space-y-1 text-sm">
+              <p className="font-medium text-emerald-700">Connecté</p>
+              <p className="text-zinc-500">
+                Dossier racine :{" "}
+                {tenant.google_drive_folder_id ?? "à configurer"}
+              </p>
+              {tenant.drive_connected_at && (
+                <p className="text-xs text-zinc-400">
+                  Connecté le{" "}
+                  {new Date(tenant.drive_connected_at).toLocaleDateString(
+                    "fr-FR"
+                  )}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-zinc-500">
+                Non connecté — les dossiers validés ne peuvent pas être
+                transférés vers votre Drive tant que la connexion n&apos;est
+                pas établie.
+              </p>
+              <a
+                href={`/api/drive/oauth?tenantId=${tenant.id}`}
+                className="inline-flex rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800"
+              >
+                Connecter Google Drive
+              </a>
+            </div>
+          )}
         </section>
       </div>
     </div>
