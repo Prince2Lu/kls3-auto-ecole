@@ -90,8 +90,8 @@ export default async function ElevesPage({ params }: ElevesPageProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-900">Élèves</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <h1 className="font-display text-xl font-semibold text-ink">Élèves</h1>
+        <p className="mt-1 text-sm text-neutral">
           {rows.length} dossier{rows.length !== 1 ? "s" : ""} au total
         </p>
       </div>

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { validateDossier } from "@/app/tenant/[tenant]/(dashboard)/eleves/[studentId]/validate-action";
+import { Button } from "@/components/ui/Button";
 
 type ValidateDossierButtonProps = {
   studentId: string;
@@ -47,18 +48,15 @@ export function ValidateDossierButton({
 
   return (
     <>
-      <button
-        type="button"
+      <Button
         onClick={() => {
           setError(null);
           setShowModal(true);
         }}
         disabled={isPending}
-        className="rounded-md px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-        style={{ backgroundColor: "var(--tenant-primary)" }}
       >
         Valider le dossier
-      </button>
+      </Button>
 
       {showModal && (
         <div
@@ -67,45 +65,38 @@ export function ValidateDossierButton({
           aria-modal="true"
           aria-labelledby="validate-dossier-title"
         >
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-lg border border-border bg-white p-6 shadow-xl">
             <h2
               id="validate-dossier-title"
-              className="text-lg font-semibold text-zinc-900"
+              className="font-display text-lg font-semibold text-ink"
             >
               Confirmer la validation
             </h2>
-            <p className="mt-3 text-sm leading-relaxed text-zinc-600">
+            <p className="mt-3 text-sm leading-relaxed text-neutral">
               Confirmer la validation du dossier de{" "}
-              <span className="font-medium text-zinc-900">
+              <span className="font-medium text-ink">
                 {prenom} {nom}
               </span>{" "}
               ? Cette action marquera le dossier comme complet.
             </p>
 
             {error && (
-              <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p className="mt-3 rounded-md bg-danger-subtle px-3 py-2 text-sm text-danger">
                 {error}
               </p>
             )}
 
             <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
                 onClick={() => setShowModal(false)}
                 disabled={isPending}
-                className="rounded-md border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
               >
                 Annuler
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirm}
-                disabled={isPending}
-                className="rounded-md px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-                style={{ backgroundColor: "var(--tenant-primary)" }}
-              >
+              </Button>
+              <Button onClick={handleConfirm} disabled={isPending}>
                 {isPending ? "Validation…" : "Confirmer"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { sendManualReminder } from "@/lib/actions/send-manual-reminder";
+import { Button } from "@/components/ui/Button";
 
 type ManualReminderButtonProps = {
   studentId: string;
@@ -37,19 +38,15 @@ export function ManualReminderButton(props: ManualReminderButtonProps) {
 
   return (
     <div className="flex flex-col items-end gap-1.5">
-      <button
-        onClick={handleClick}
-        disabled={isPending}
-        className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
-      >
+      <Button variant="secondary" size="sm" onClick={handleClick} disabled={isPending}>
         {isPending ? "Envoi..." : "Relancer maintenant"}
-      </button>
+      </Button>
       {feedback && (
         <p
           className={
             feedback.type === "success"
-              ? "text-xs text-emerald-700"
-              : "text-xs text-red-600"
+              ? "text-xs text-success"
+              : "text-xs text-danger"
           }
         >
           {feedback.message}

@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { REQUIRED_DOCUMENT_TYPES } from "@/lib/constants/documents";
+import {
+  STUDENT_STATUS_LABELS as STATUS_LABELS,
+  STUDENT_STATUS_BADGE_CONFIG as STATUS_BADGE_CONFIG,
+} from "@/lib/constants/student-status";
 
 type DocumentDetailValue = "recu" | "manquant" | "non_applicable";
 
@@ -22,22 +28,6 @@ type StudentRow = {
 
 type StudentsTableProps = {
   students: StudentRow[];
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  en_attente: "En attente",
-  document_pending: "Documents en attente",
-  documents_complets: "À valider",
-  payment_pending: "Paiement en attente",
-  complete: "Complet",
-};
-
-const STATUS_BADGE: Record<string, string> = {
-  en_attente: "bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200",
-  document_pending: "bg-amber-100 text-amber-800 ring-1 ring-amber-200",
-  documents_complets: "bg-violet-100 text-violet-800 ring-1 ring-violet-200",
-  payment_pending: "bg-blue-100 text-blue-800 ring-1 ring-blue-200",
-  complete: "bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200",
 };
 
 const FILTER_OPTIONS = [
@@ -110,9 +100,6 @@ function buildCsv(rows: StudentRow[]): string {
     return fields.map((field) => escapeCsvField(String(field))).join(",");
   });
 
-  // BOM UTF-8 en tête : sans lui, Excel (très majoritairement utilisé
-  // côté auto-écoles) affiche les accents français de travers à
-  // l'ouverture directe du fichier, même si le contenu est du UTF-8 valide.
   const BOM = "\uFEFF";
   return BOM + [headers.join(","), ...lines].join("\n");
 }
@@ -131,14 +118,13 @@ function downloadCsv(csvContent: string, filename: string) {
 
 function StatusBadge({ status }: { status: string | null }) {
   const key = status ?? "";
-  const classes =
-    STATUS_BADGE[key] ?? "bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200";
+  const config = STATUS_BADGE_CONFIG[key] ?? { variant: "neutral" as const };
+  const Icon = config.icon;
   return (
-    <span
-      className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${classes}`}
-    >
+    <Badge variant={config.variant}>
+      {Icon && <Icon className="h-3 w-3" aria-hidden />}
       {STATUS_LABELS[key] ?? status ?? "—"}
-    </span>
+    </Badge>
   );
 }
 
@@ -150,93 +136,109 @@ export function StudentsTable({ students }: StudentsTableProps) {
     return students.filter((s) => s.status === filter);
   }, [students, filter]);
 
+  const counts = useMemo(() => {
+    const map: Record<FilterValue, number> = {
+      all: students.length,
+      document_pending: 0,
+      documents_complets: 0,
+      payment_pending: 0,
+      complete: 0,
+    };
+    for (const s of students) {
+      if (s.status && s.status in map) {
+        map[s.status as FilterValue] += 1;
+      }
+    }
+    return map;
+  }, [students]);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2">
           {FILTER_OPTIONS.map((opt) => (
-            <button
+            <Button
               key={opt.value}
-              type="button"
+              variant={filter === opt.value ? "primary" : "secondary"}
+              size="sm"
               onClick={() => setFilter(opt.value)}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                filter === opt.value
-                  ? "text-white"
-                  : "border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50"
-              }`}
-              style={
-                filter === opt.value
-                  ? { backgroundColor: "var(--tenant-primary)" }
-                  : undefined
-              }
             >
               {opt.label}
-            </button>
+              <span
+                className={
+                  filter === opt.value
+                    ? "ml-1.5 opacity-75"
+                    : "ml-1.5 text-neutral"
+                }
+              >
+                {counts[opt.value]}
+              </span>
+            </Button>
           ))}
         </div>
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={filtered.length === 0}
           onClick={() => {
             const csv = buildCsv(filtered);
             const date = new Date().toISOString().slice(0, 10);
             downloadCsv(csv, `eleves-${date}.csv`);
           }}
-          disabled={filtered.length === 0}
-          className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Exporter en CSV
-        </button>
+        </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-md border border-zinc-200">
+      <div className="overflow-x-auto rounded-lg border border-border">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-200 bg-zinc-50">
-              <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <tr className="border-b border-border bg-surface-muted">
+              <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-neutral">
                 Nom
               </th>
-              <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-neutral">
                 Prénom
               </th>
-              <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-neutral">
                 Formule
               </th>
-              <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-neutral">
                 Exigences
               </th>
-              <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-neutral">
                 Statut
               </th>
-              <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-neutral">
                 Dernière activité
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100 bg-white">
+          <tbody className="divide-y divide-border bg-white">
             {filtered.map((student) => (
               <tr
                 key={student.id}
-                className="cursor-pointer transition-colors hover:bg-zinc-50"
+                className="cursor-pointer transition-colors hover:bg-surface-muted"
               >
                 <td className="px-4 py-2.5">
                   <Link
                     href={`/eleves/${student.id}`}
-                    className="font-medium text-zinc-900 hover:underline"
+                    className="font-medium text-ink hover:underline"
                   >
                     {student.nom}
                   </Link>
                 </td>
-                <td className="px-4 py-2.5 text-zinc-700">{student.prenom}</td>
-                <td className="px-4 py-2.5 text-zinc-600">
+                <td className="px-4 py-2.5 text-ink">{student.prenom}</td>
+                <td className="px-4 py-2.5 text-neutral">
                   {student.formulaLabel ?? "—"}
                 </td>
-                <td className="px-4 py-2.5 tabular-nums text-zinc-700">
+                <td className="px-4 py-2.5 tabular-nums text-ink">
                   {student.exigences}
                 </td>
                 <td className="px-4 py-2.5">
                   <StatusBadge status={student.status} />
                 </td>
-                <td className="px-4 py-2.5 tabular-nums text-zinc-600">
+                <td className="px-4 py-2.5 tabular-nums text-neutral">
                   {student.last_activity_at
                     ? new Date(student.last_activity_at).toLocaleDateString(
                         "fr-FR"
@@ -249,7 +251,7 @@ export function StudentsTable({ students }: StudentsTableProps) {
               <tr>
                 <td
                   colSpan={6}
-                  className="px-4 py-10 text-center text-zinc-500"
+                  className="px-4 py-10 text-center text-neutral"
                 >
                   Aucun élève pour ce filtre
                 </td>
@@ -258,7 +260,7 @@ export function StudentsTable({ students }: StudentsTableProps) {
           </tbody>
         </table>
       </div>
-      <p className="text-xs text-zinc-500">
+      <p className="text-xs text-neutral">
         {filtered.length} élève{filtered.length !== 1 ? "s" : ""} affiché
         {filter !== "all" ? ` · filtre actif` : ""}
       </p>
