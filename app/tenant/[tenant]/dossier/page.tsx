@@ -5,7 +5,9 @@ import { validateMagicLinkForDossier } from "@/lib/dossier/magic-link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { toStudentDocument } from "@/lib/types/documents";
+import { Stepper } from "@/components/ui/Stepper";
 import { notFound } from "next/navigation";
+import { ShieldCheck } from "lucide-react";
 
 type DossierPageProps = {
   params: Promise<{ tenant: string }>;
@@ -94,10 +96,21 @@ export default async function DossierPage({
   return (
     <div className="mx-auto max-w-lg space-y-6 px-6 py-8">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-900">
+        <h1 className="text-xl font-semibold text-ink">
           Bonjour {student?.prenom ?? ""} {student?.nom ?? ""}
         </h1>
-        <p className="mt-2 text-sm text-zinc-600">
+        <div className="mt-4">
+          <Stepper
+            orientation="horizontal"
+            currentStep={2}
+            steps={[
+              { number: 1, title: "Inscription" },
+              { number: 2, title: "Dépôt des pièces" },
+              { number: 3, title: "Validation" },
+            ]}
+          />
+        </div>
+        <p className="mt-2 text-sm text-neutral">
           Déposez vos pièces justificatives ci-dessous pour compléter votre
           dossier.
         </p>
@@ -116,6 +129,12 @@ export default async function DossierPage({
           />
         ))}
       </div>
+
+      <p className="flex items-center gap-2 text-xs text-neutral">
+        <ShieldCheck className="h-4 w-4 text-brand" aria-hidden />
+        Documents transmis directement à votre auto-école, jamais stockés
+        durablement chez KLS3.
+      </p>
     </div>
   );
 }

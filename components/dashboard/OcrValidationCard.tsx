@@ -68,9 +68,9 @@ export function OcrValidationCard({
 
   if (status === "validated") {
     return (
-      <div className="flex items-start gap-3 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm">
-        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-        <p className="font-medium text-emerald-800">
+      <div className="flex items-start gap-3 rounded-md border border-success bg-success-subtle px-4 py-3 text-sm">
+        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+        <p className="font-medium text-success">
           {label} — validé{" "}
           {validatedAt
             ? `le ${new Date(validatedAt).toLocaleDateString("fr-FR")}`
@@ -83,13 +83,13 @@ export function OcrValidationCard({
 
   if (status === "failed_student_action") {
     return (
-      <div className="flex items-start gap-3 rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm">
-        <RotateCcw className="mt-0.5 h-4 w-4 shrink-0 text-zinc-500" />
+      <div className="flex items-start gap-3 rounded-md border border-border bg-surface-muted px-4 py-3 text-sm">
+        <RotateCcw className="mt-0.5 h-4 w-4 shrink-0 text-neutral" />
         <div>
-          <p className="font-medium text-zinc-700">
+          <p className="font-medium text-ink">
             {label} — lecture automatique échouée
           </p>
-          <p className="mt-0.5 text-zinc-500">
+          <p className="mt-0.5 text-neutral">
             L&apos;élève doit retéléverser ce document (tentative {attemptCount}).
             Aucune action secrétaire requise pour l&apos;instant.
           </p>
@@ -162,27 +162,27 @@ export function OcrValidationCard({
           ];
 
     return (
-      <div className="rounded-md border-2 border-red-300 bg-red-50/60 p-5 ring-1 ring-red-200">
+      <div className="rounded-md border-2 border-danger bg-danger-subtle p-5">
         <div className="mb-4 flex items-start gap-2">
-          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-danger" />
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-red-700">
+            <p className="text-xs font-semibold uppercase tracking-wide text-danger">
               Saisie manuelle requise — {attemptCount} échecs OCR
             </p>
-            <h3 className="mt-0.5 text-base font-semibold text-zinc-900">
+            <h3 className="mt-0.5 text-base font-semibold font-display text-ink">
               {label} — lecture automatique impossible
             </h3>
           </div>
         </div>
 
         <div className="mb-4 space-y-3">
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-neutral">
             Champs pré-remplis à partir de la dernière tentative de lecture
             automatique — à vérifier avant d&apos;enregistrer.
           </p>
           {fields.map(({ key, label: fieldLabel }) => (
             <div key={key}>
-              <label className="mb-1 block text-xs font-medium text-zinc-600">
+              <label className="mb-1 block text-xs font-medium text-neutral">
                 {fieldLabel}
               </label>
               <input
@@ -194,14 +194,14 @@ export function OcrValidationCard({
                 autoComplete="off"
                 autoCorrect="off"
                 spellCheck={false}
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900"
+                className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-ink disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
               />
             </div>
           ))}
         </div>
 
         {error && (
-          <p className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p className="mb-3 rounded-md bg-danger-subtle px-3 py-2 text-sm text-danger">
             {error}
           </p>
         )}
@@ -210,8 +210,7 @@ export function OcrValidationCard({
           type="button"
           disabled={isPending}
           onClick={handleManualSubmit}
-          className="rounded-md px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
-          style={{ backgroundColor: "var(--tenant-primary)" }}
+          className="rounded-md bg-brand px-5 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand/20"
         >
           {isPending ? "Enregistrement…" : "Enregistrer et valider"}
         </button>
@@ -246,15 +245,15 @@ export function OcrValidationCard({
   }
 
   return (
-    <div className="rounded-md border-2 border-amber-400 bg-amber-50/60 p-5 ring-1 ring-amber-200">
+    <div className="rounded-md border-2 border-warning bg-warning-subtle p-5">
       <div className="mb-4 flex items-start justify-between gap-4">
         <div className="flex items-start gap-2">
-          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+            <p className="text-xs font-semibold uppercase tracking-wide text-warning">
               Action requise — validation humaine
             </p>
-            <h3 className="mt-0.5 text-base font-semibold text-zinc-900">
+            <h3 className="mt-0.5 text-base font-semibold font-display text-ink">
               Extraction {label}
             </h3>
           </div>
@@ -266,11 +265,11 @@ export function OcrValidationCard({
         )}
       </div>
 
-      <dl className="mb-4 divide-y divide-amber-200/80 rounded-md border border-amber-200/80 bg-white text-sm">
+      <dl className="mb-4 divide-y divide-border rounded-md border border-border bg-white text-sm">
         {Object.entries(extractedData).map(([key, value]) => (
           <div key={key} className="flex gap-3 px-3 py-2">
-            <dt className="w-28 shrink-0 text-zinc-500">{key}</dt>
-            <dd className="font-mono text-zinc-900">
+            <dt className="w-28 shrink-0 text-neutral">{key}</dt>
+            <dd className="font-mono text-ink">
               {formatExtractedDisplayValue(key, value)}
             </dd>
           </div>
@@ -280,7 +279,7 @@ export function OcrValidationCard({
       {documentType === "cni" && (
         <p
           className={`mb-4 text-sm ${
-            datesDivergent ? "font-medium text-red-700" : "text-zinc-600"
+            datesDivergent ? "font-medium text-danger" : "text-neutral"
           }`}
         >
           Date déclarée à l&apos;inscription :{" "}
@@ -289,7 +288,7 @@ export function OcrValidationCard({
       )}
 
       {error && (
-        <p className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="mb-3 rounded-md bg-danger-subtle px-3 py-2 text-sm text-danger">
           {error}
         </p>
       )}
@@ -298,8 +297,7 @@ export function OcrValidationCard({
         type="button"
         disabled={isPending}
         onClick={handleConfirm}
-        className="rounded-md px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
-        style={{ backgroundColor: "var(--tenant-primary)" }}
+        className="rounded-md bg-brand px-5 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand/20"
       >
         {isPending ? "Validation…" : "Confirmer l'extraction"}
       </button>
