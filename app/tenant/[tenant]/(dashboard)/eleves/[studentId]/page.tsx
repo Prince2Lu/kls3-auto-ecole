@@ -194,16 +194,32 @@ export default async function StudentDetailPage({
             <tbody className="divide-y divide-border bg-white">
               {(documents ?? []).map((doc) => {
                 const docStatus = doc.status ?? "pending";
-                const docVariant = DOC_STATUS_VARIANT[docStatus] ?? "neutral";
+                const extraction = doc.ocr_extractions?.[0];
+
+                let docVariant: BadgeVariant =
+                  DOC_STATUS_VARIANT[docStatus] ?? "neutral";
+                let docLabel = DOC_STATUS_LABELS[docStatus] ?? docStatus;
+
+                if (extraction && extraction.status !== "validated") {
+                  if (extraction.status === "pending") {
+                    docVariant = "warning";
+                    docLabel = "À valider";
+                  } else if (extraction.status === "failed_student_action") {
+                    docVariant = "warning";
+                    docLabel = "Lecture échouée";
+                  } else if (extraction.status === "failed_secretary_entry") {
+                    docVariant = "danger";
+                    docLabel = "Saisie manuelle requise";
+                  }
+                }
+
                 return (
                   <tr key={doc.id} className="hover:bg-surface-muted">
                     <td className="px-4 py-2.5 font-medium uppercase text-ink">
                       {doc.type}
                     </td>
                     <td className="px-4 py-2.5">
-                      <Badge variant={docVariant}>
-                        {DOC_STATUS_LABELS[docStatus] ?? docStatus}
-                      </Badge>
+                      <Badge variant={docVariant}>{docLabel}</Badge>
                     </td>
                     <td className="px-4 py-2.5 tabular-nums text-neutral">
                       {doc.uploaded_at

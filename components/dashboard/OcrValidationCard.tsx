@@ -83,8 +83,8 @@ export function OcrValidationCard({
 
   if (status === "failed_student_action") {
     return (
-      <div className="flex items-start gap-3 rounded-md border border-border bg-surface-muted px-4 py-3 text-sm">
-        <RotateCcw className="mt-0.5 h-4 w-4 shrink-0 text-neutral" />
+      <div className="flex items-start gap-3 rounded-md border border-warning bg-warning-subtle px-4 py-3 text-sm">
+        <RotateCcw className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
         <div>
           <p className="font-medium text-ink">
             {label} — lecture automatique échouée
