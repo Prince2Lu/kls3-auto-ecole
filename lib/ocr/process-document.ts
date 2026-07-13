@@ -42,11 +42,16 @@ export async function processDocumentOcr(
 ): Promise<void> {
   const { data: existing } = await admin
     .from("ocr_extractions")
-    .select("attempt_count")
+    .select("attempt_count, status")
     .eq("document_id", documentId)
     .maybeSingle();
 
-  const attemptCount = (existing?.attempt_count ?? 0) + 1;
+  // Un document déjà validé referme le cycle d'échecs précédent : un nouveau
+  // passage OCR après validation repart à zéro, plutôt que d'hériter du
+  // compteur d'avant (qui mesurait un historique devenu non pertinent).
+  const previousAttemptCount =
+    existing?.status === "validated" ? 0 : existing?.attempt_count ?? 0;
+  const attemptCount = previousAttemptCount + 1;
 
   let extractedData: OcrExtractedData = {};
   let ibanChecksumValid: boolean | null = null;
