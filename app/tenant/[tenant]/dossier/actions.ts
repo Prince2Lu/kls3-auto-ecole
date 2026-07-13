@@ -10,6 +10,7 @@ import {
 import { validateMagicLinkForDossier } from "@/lib/dossier/magic-link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { touchLastActivity } from "@/lib/students/touch-last-activity";
+import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { processDocumentOcr } from "@/lib/ocr/process-document";
 import type { DocumentType } from "@/lib/types/documents";
 
@@ -184,7 +185,11 @@ export async function uploadDocument(
   // OCR (US15/US16) : uniquement pour les documents qui portent des données
   // à extraire (CNI, RIB) — jamais bloquant pour l'élève, une panne Vision
   // API ne doit jamais faire échouer l'upload.
-  if (documentType === "cni" || documentType === "rib") {
+  if (
+    documentType === "cni" ||
+    documentType === "cni_representant" ||
+    documentType === "rib"
+  ) {
     try {
       await processDocumentOcr(admin, {
         documentId: upsertedDocument.id,
@@ -241,5 +246,57 @@ export async function uploadDocument(
   revalidatePath(`/tenant/${tenantSlug}/dossier`);
   revalidatePath(`/tenant/${tenantSlug}/eleves`);
   revalidatePath(`/tenant/${tenantSlug}/eleves/${magicLink.student_id}`);
+  return { success: true };
+}
+
+type UpsertRepresentantResult = { success: true } | { error: string };
+
+export async function upsertRepresentantLegal(
+  formData: FormData
+): Promise<UpsertRepresentantResult> {
+  const token = String(formData.get("token") ?? "").trim();
+  const tenantSlug = String(formData.get("tenantSlug") ?? "").trim();
+  const nom = String(formData.get("nom") ?? "").trim();
+  const prenom = String(formData.get("prenom") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+
+  if (!token || !tenantSlug) {
+    return { error: "Session invalide. Rechargez la page via votre lien magique." };
+  }
+  if (!nom || !prenom) {
+    return { error: "Nom et prénom du représentant légal sont requis." };
+  }
+
+  const tenant = await resolveTenantBySlug(tenantSlug);
+  if (!tenant) return { error: "Auto-école introuvable." };
+
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return { error: "Configuration serveur incomplète." };
+  }
+
+  const magicLink = await validateMagicLinkForDossier(admin, token, tenant.id);
+  if (!magicLink) return { error: "Lien invalide ou expiré." };
+
+  const { error } = await admin.from("representants_legaux").upsert(
+    {
+      tenant_id: magicLink.tenant_id,
+      student_id: magicLink.student_id,
+      nom,
+      prenom,
+      email: email || null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "student_id" }
+  );
+
+  if (error) {
+    console.error("[upsertRepresentantLegal] Échec upsert:", error.message);
+    return { error: "Impossible d'enregistrer les informations du représentant." };
+  }
+
+  revalidatePath(`/tenant/${tenantSlug}/dossier`);
   return { success: true };
 }

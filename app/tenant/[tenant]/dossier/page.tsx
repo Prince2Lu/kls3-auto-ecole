@@ -1,8 +1,10 @@
 import { DocumentUploadCard } from "@/components/dossier/DocumentUploadCard";
 import { DocumentsChecklist } from "@/components/dossier/DocumentsChecklist";
+import { RepresentantLegalCard } from "@/components/dossier/RepresentantLegalCard";
 import { computeRequiredDocumentTypes } from "@/lib/constants/documents";
 import { validateMagicLinkForDossier } from "@/lib/dossier/magic-link";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { calculateAge } from "@/lib/students/age";
 import { resolveTenantBySlug } from "@/lib/tenant/resolve";
 import { toStudentDocument } from "@/lib/types/documents";
 import { Stepper } from "@/components/ui/Stepper";
@@ -86,12 +88,21 @@ export default async function DossierPage({
     )
     .eq("student_id", magicLink.student_id);
 
+  const { data: representant } = await admin
+    .from("representants_legaux")
+    .select("nom, prenom, email")
+    .eq("student_id", magicLink.student_id)
+    .maybeSingle();
+
   const documents = (documentRows ?? [])
     .map((row) => toStudentDocument(row))
     .filter((doc): doc is NonNullable<typeof doc> => doc !== null);
 
   const documentsByType = new Map(documents.map((doc) => [doc.type, doc]));
   const requiredTypes = computeRequiredDocumentTypes(student?.date_of_birth ?? null);
+  const isMinor = student?.date_of_birth
+    ? calculateAge(student.date_of_birth) < 18
+    : false;
 
   return (
     <div className="mx-auto max-w-lg space-y-6 px-6 py-8">
@@ -115,6 +126,16 @@ export default async function DossierPage({
           dossier.
         </p>
       </div>
+
+      {isMinor ? (
+        <RepresentantLegalCard
+          token={token.trim()}
+          tenantSlug={slug}
+          initialNom={representant?.nom ?? ""}
+          initialPrenom={representant?.prenom ?? ""}
+          initialEmail={representant?.email ?? ""}
+        />
+      ) : null}
 
       <DocumentsChecklist documents={documents} requiredTypes={requiredTypes} />
 

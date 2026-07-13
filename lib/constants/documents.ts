@@ -69,6 +69,23 @@ export const REQUIRED_DOCUMENT_TYPES: readonly RequiredDocumentConfig[] = [
     maxBytes: TEN_MB,
     category: "facturation_kls3",
   },
+  {
+    type: "cni_representant",
+    label: "CNI du représentant légal",
+    accept: ".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf",
+    acceptMimeTypes: ["image/jpeg", "image/png", "application/pdf"],
+    maxBytes: TEN_MB,
+    category: "ants",
+  },
+  {
+    type: "domicile_representant",
+    label: "Justificatif de domicile du représentant légal",
+    accept: ".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf",
+    acceptMimeTypes: ["image/jpeg", "image/png", "application/pdf"],
+    maxBytes: TEN_MB,
+    requiresDeclaredDate: true,
+    category: "ants",
+  },
 ] as const;
 
 export function getDocumentConfig(type: DocumentType) {
@@ -85,16 +102,26 @@ export function getDocumentCategory(type: DocumentType): DocumentCategory {
 export function computeRequiredDocumentTypes(
   dateOfBirth: string | null
 ): readonly RequiredDocumentConfig[] {
+  const REPRESENTANT_TYPES = new Set([
+    "cni_representant",
+    "domicile_representant",
+  ]);
+
   if (!dateOfBirth) {
     return REQUIRED_DOCUMENT_TYPES.filter(
-      (doc) => doc.type !== "assr" && doc.type !== "jdc"
+      (doc) =>
+        doc.type !== "assr" &&
+        doc.type !== "jdc" &&
+        !REPRESENTANT_TYPES.has(doc.type)
     );
   }
 
   const age = calculateAge(dateOfBirth);
+  const isMinor = age < 18;
   return REQUIRED_DOCUMENT_TYPES.filter((doc) => {
     if (doc.type === "assr") return age < 21;
     if (doc.type === "jdc") return age >= 17 && age <= 25;
+    if (REPRESENTANT_TYPES.has(doc.type)) return isMinor;
     return true;
   });
 }

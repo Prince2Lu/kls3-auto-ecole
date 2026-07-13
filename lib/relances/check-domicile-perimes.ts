@@ -50,7 +50,7 @@ export async function checkAndNotifyDomicilePerimes(
     `
     )
     .eq("tenant_id", tenant.id)
-    .eq("type", "domicile")
+    .in("type", ["domicile", "domicile_representant"])
     .eq("status", "recu")
     .not("date_document", "is", null);
 

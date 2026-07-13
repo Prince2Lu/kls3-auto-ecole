@@ -16,7 +16,7 @@ type OcrValidationCardProps = {
   tenantId: string;
   tenantSlug: string;
   studentId: string;
-  documentType: "cni" | "rib";
+  documentType: "cni" | "rib" | "cni_representant";
   status: OcrExtractionStatus;
   extractedData: Record<string, string>;
   ibanChecksumValid: boolean | null;
@@ -27,9 +27,10 @@ type OcrValidationCardProps = {
   declaredDateNaissance?: string | null;
 };
 
-const DOCUMENT_LABELS: Record<"cni" | "rib", string> = {
+const DOCUMENT_LABELS: Record<"cni" | "rib" | "cni_representant", string> = {
   cni: "CNI",
   rib: "RIB",
+  cni_representant: "CNI du représentant légal",
 };
 
 export function OcrValidationCard({

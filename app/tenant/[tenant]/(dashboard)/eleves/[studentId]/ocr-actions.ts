@@ -147,7 +147,7 @@ export async function submitManualOcrEntry(
   tenantId: string,
   tenantSlug: string,
   studentId: string,
-  documentType: "cni" | "rib",
+  documentType: "cni" | "rib" | "cni_representant",
   entry: ManualRibEntry | ManualCniEntry
 ): Promise<ActionResult> {
   const auth = await requireMembership(tenantId);

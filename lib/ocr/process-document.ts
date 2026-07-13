@@ -6,11 +6,12 @@ import {
   type OcrExtractedData,
   type OcrExtractionStatus,
 } from "@/lib/types/ocr";
+import type { DocumentType } from "@/lib/types/documents";
 
 type ProcessDocumentOcrParams = {
   documentId: string;
   tenantId: string;
-  documentType: "cni" | "rib";
+  documentType: DocumentType;
   buffer: Buffer;
   mimeType: string;
 };

@@ -1,4 +1,12 @@
-export type DocumentType = "cni" | "photo" | "assr" | "rib" | "jdc" | "domicile";
+export type DocumentType =
+  | "cni"
+  | "photo"
+  | "assr"
+  | "rib"
+  | "jdc"
+  | "domicile"
+  | "cni_representant"
+  | "domicile_representant";
 
 export type DocumentStatus = "manquant" | "recu" | "perime";
 
@@ -39,7 +47,18 @@ export function toStudentDocument(row: {
   date_document?: string | null;
 }): StudentDocument | null {
   const type = row.type as DocumentType;
-  if (!["cni", "photo", "assr", "rib", "jdc", "domicile"].includes(type)) {
+  if (
+    ![
+      "cni",
+      "photo",
+      "assr",
+      "rib",
+      "jdc",
+      "domicile",
+      "cni_representant",
+      "domicile_representant",
+    ].includes(type)
+  ) {
     return null;
   }
 

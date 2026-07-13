@@ -3,6 +3,7 @@ import { extractPdfText } from "@/lib/ocr/extract-pdf-text";
 import { parseRibText } from "@/lib/ocr/parse-rib";
 import { parseCniMrz, parseCniFreeText } from "@/lib/ocr/parse-cni";
 import { validateIbanChecksum } from "@/lib/ocr/checksums";
+import type { DocumentType } from "@/lib/types/documents";
 import type { OcrExtractedData } from "@/lib/types/ocr";
 
 export { validateIbanChecksum } from "@/lib/ocr/checksums";
@@ -58,7 +59,7 @@ export type OcrExtractionResult = {
 export async function extractFromDocument(
   buffer: Buffer,
   mimeType: string,
-  documentType: "cni" | "rib"
+  documentType: DocumentType
 ): Promise<OcrExtractionResult> {
   const rawText = await resolveRawText(buffer, mimeType);
   console.log("[DEBUG OCR]", documentType, "texte brut:", rawText || "(vide)");

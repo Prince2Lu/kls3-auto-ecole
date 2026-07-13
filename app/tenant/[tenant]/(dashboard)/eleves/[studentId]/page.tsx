@@ -78,7 +78,7 @@ export default async function StudentDetailPage({
   const ocrExtractions = (documents ?? []).flatMap((doc) =>
     (doc.ocr_extractions ?? []).map((extraction) => ({
       ...extraction,
-      documentType: doc.type as "cni" | "rib",
+      documentType: doc.type as "cni" | "rib" | "cni_representant",
     }))
   );
 
