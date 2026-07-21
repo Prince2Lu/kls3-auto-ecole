@@ -2,11 +2,11 @@ export function buildDossierUrl(tenantSlug: string, token: string) {
   const encodedToken = encodeURIComponent(token);
 
   if (process.env.NODE_ENV === "development") {
-    const port = process.env.PORT ?? "3000";
+    const port = process.env.PORT || "3000";
     return `http://${tenantSlug}.localhost:${port}/dossier?token=${encodedToken}`;
   }
 
-  const domain = process.env.NEXT_PUBLIC_TENANT_DOMAIN ?? "kls3-dev.com";
+  const domain = process.env.NEXT_PUBLIC_TENANT_DOMAIN || "kls3-dev.com";
   return `https://${tenantSlug}.${domain}/dossier?token=${encodedToken}`;
 }
 
